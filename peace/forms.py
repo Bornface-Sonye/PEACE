@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from django import forms
 from .models import Suspect, Case, SuspectTestification
 
@@ -37,32 +36,3 @@ class InterrogatorReportForm(forms.Form):
         label='Email Address',
         widget=forms.Select(attrs={'class': 'blue-input-box'}),
     )
-=======
-# forms.py
-from django import forms
-from .models import Statement, Enforcer, Case, Witness
-
-class StatementForm(forms.ModelForm):
-    class Meta:
-        model = Statement
-        fields = ['enforcer_id', 'case_description', 'crime_location', 'crime_victim', 'crime_incident_date', 'crime_incident_time']
-
-
-from django import forms
-from .models import WitnessTestification
-
-class WitnessTestificationForm(forms.ModelForm):
-    class Meta:
-        model = WitnessTestification
-        fields = ['witness_id', 'case_description', 'case_location', 'case_victim', 'case_incident_date', 'case_incident_time', 'case_potential_suspect']
-
-
-# forms.py
-from django import forms
-from .models import SuspectTestification
-
-class SuspectTestificationForm(forms.ModelForm):
-    class Meta:
-        model = SuspectTestification
-        fields = ['suspect_id', 'case_description', 'crime_location', 'crime_victim', 'crime_incident_date', 'crime_incident_time']
->>>>>>> 7ff2cbcfdbc7181a4fe291243adbdb7c4db75281
