@@ -7,7 +7,7 @@
 <form method="post" action="{% url 'report' %}" class="report-form">
     {% csrf_token %}
     <div class="form-section">
-        <h2>Sentiment Analysis Information</h2>
+        <h2>Prediction Results</h2>
             <div class="form-field">
                 <label for="{{ form.email_address.id_for_label }}" class="required">Email Address:</label>
                 {{ form.email_address }}

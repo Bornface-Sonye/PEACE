@@ -20,6 +20,6 @@ from django.urls import include, path
 from peace import views
 
 urlpatterns=[
-    path("zeroreid/", include("peace.urls")),
-    path("zeroreid/interrogator/admin/",admin.site.urls),
+    path("peace/", include("peace.urls")),
+    path("peace/admin/",admin.site.urls),
 ]
