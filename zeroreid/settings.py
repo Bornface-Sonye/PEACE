@@ -117,11 +117,18 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+# URL prefix for static files.
+# Example: "http://example.com/static/", "http://static.example.com/"
+STATIC_URL = '/static/'
 
-# App-level static files
-APP_STATIC_ROOT = os.path.join(BASE_DIR, 'peace/static')
-STATICFILES_DIRS = [APP_STATIC_ROOT]
+# Directory where static files will be collected during deployment.
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Additional locations of static files
+STATICFILES_DIRS = [
+    # Add directories here if you have additional static files to serve
+    os.path.join(BASE_DIR, 'peace/static'),
+]
 
 
 # Default primary key field type
