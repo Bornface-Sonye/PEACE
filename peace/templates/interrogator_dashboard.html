@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{% url 'answer' %}">Add Answers</a></li>
+                <li><a href="{% url 'report' %}">View  Report</a></li>
+            </ul>
+        </nav>
+    </header>
+    <footer>
+        <p>&copy; 2024 All Rights Reserved</p>
+    </footer>
+    
+    <a href="#home" id="back-to-top" title="Back to Top">&uarr;</a>
+{% endblock %}

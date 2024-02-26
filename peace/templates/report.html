@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            text-align: center;
+            margin-top: 50px;
+        }
+        h1 {
+            color: #007bff;
+        }
+        form {
+            margin-top: 20px;
+        }
+        label {
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"] {
+            width: 300px;
+            padding: 8px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button[type="submit"] {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        .report {
+            margin-top: 30px;
+            text-align: left;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
+        }
+        .report h2 {
+            color: #007bff;
+        }
+        .report ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .report li {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Load Report</h1>
+    <form method="post">
+        {% csrf_token %}
+        <label for="case_description">Enter Case Description:</label><br>
+        <input type="text" id="case_description" name="case_description"><br><br>
+        <button type="submit">Load Report</button>
+    </form>
+    {% if error_message %}
+        <p>{{ error_message }}</p>
+    {% endif %}
+    {% if case %}
+        <div class="report">
+            <h2>Case Information</h2>
+            <p>Description: {{ case.case_description }}</p>
+            <p>Status: {{ case.case_status }}</p>
+            <h2>Suspects</h2>
+            <ul>
+                {% for suspect in suspects %}
+                    <li>Email: {{ suspect.email_address.email }}, First Name: {{ suspect.email_address.first_name }}, Last Name: {{ suspect.email_address.last_name }}</li>
+                {% endfor %}
+            </ul>
+            <h2>Witnesses</h2>
+            <ul>
+                {% for witness in witnesses %}
+                    <li>Email: {{ witness.email_address.email }}, First Name: {{ witness.email_address.first_name }}, Last Name: {{ witness.email_address.last_name }}</li>
+                {% endfor %}
+            </ul>
+            <h2>Enforcers</h2>
+            <ul>
+                {% for enforcer in enforcers %}
+                    <li>Email: {{ enforcer.email_address.email }}, First Name: {{ enforcer.email_address.first_name }}, Last Name: {{ enforcer.email_address.last_name }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+</body>
+</html>

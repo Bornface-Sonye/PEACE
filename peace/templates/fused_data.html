@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Fusion Results</title>
+</head>
+<body>
+    <h1>Data Fusion Results</h1>
+    
+    {% for witness_text, enforcer_data in fused_data.items %}
+        <h2>Witness Testification: {{ witness_text }}</h2>
+        <ul>
+            {% for data in enforcer_data %}
+                <li>
+                    <strong>Enforcer Statement:</strong> {{ data.enforcer_statement }}<br>
+                    <strong>Similarity Score:</strong> {{ data.similarity_score }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+</body>
+</html>

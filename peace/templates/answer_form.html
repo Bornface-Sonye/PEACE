@@ -1,0 +1,54 @@
+{% extends 'base_form.html' %}
+
+{% load static %}
+
+{% block content %}
+<main>
+    <!--Add Statement Section-->
+    <section id="add answer">
+        <div class="form-container">
+            <h1 class="page-title">Answer Form</h1>
+                <form method="post" action="{% url 'answer' %}">
+                    {% csrf_token %}
+                    <!-- Suspect Details Section -->
+                    <div class="form-section">
+                        <h2>Suspect Information</h2>
+                            <div class="form-field">
+                                <label for="{{ form.email_address.id_for_label }}" class="required">Email Address:</label>
+                                {{ form.email_address }}
+                                {{ form.email_address.errors }}
+                            </div>
+                    
+                            <div class="form-field">
+                                <label for="{{ form.case_description.id_for_label }}" class="required">Case Description:</label>
+                                {{ form.case_description }}
+                                {{ form.case_description.errors }}
+                            </div>
+                    </div>
+                    
+                    <!-- Answer Information Section -->
+                        <div class="form-section">
+                            <h2>Answer Information</h2>
+                                <div class="form-field">
+                                    <label for="{{ form.answer_1.id_for_label }}" class="required">Question One Answer:</label>
+                                    {{ form.answer_1 }}
+                                    {{ form.answer_1.errors }}
+                            </div>
+                    
+                            <div class="form-field">
+                                <label for="{{ form.answer_2.id_for_label }}" class="required">Question Two Answer:</label>
+                                {{ form.answer_2 }}
+                                {{ form.answer_2.errors }}
+                            </div>
+                        </div>
+                            <div class="form-buttons">
+                                <button type="submit" class="submit-button blue-button">Save</button>
+                                <button type="button" class="red-button">Cancel</button>
+                                <button type="reset" class="gray-button">Clear</button>
+                            </div>
+                        </div>
+                </form>
+        </div>
+    </section>
+</main>
+{% endblock %}

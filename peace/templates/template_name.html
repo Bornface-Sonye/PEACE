@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Fusion</title>
+</head>
+<body>
+    <h1>Data Fusion</h1>
+    <form method="post">
+        {% csrf_token %}
+        <label for="case_description">Enter Case Description:</label><br>
+        <input type="text" id="case_description" name="case_description"><br><br>
+        <button type="submit">Load Data</button>
+    </form>
+    
+    {% if fusion_scores %}
+        <h2>Fusion Scores</h2>
+        <ul>
+            {% for score in fusion_scores %}
+                <li>
+                    <strong>Text 1:</strong> {{ score.text1 }}<br>
+                    <strong>Text 2:</strong> {{ score.text2 }}<br>
+                    <strong>Score:</strong> {{ score.score }}<br>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    
+    <script>
+        // Handle button click event
+        document.querySelector('button').addEventListener('click', function() {
+            location.reload();
+        });
+    </script>
+</body>
+</html>
