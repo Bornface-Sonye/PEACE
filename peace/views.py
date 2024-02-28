@@ -218,8 +218,9 @@ class InterrogatorReportView(View):
 
         email_address = request.POST.get('email_address')
         try:
-            testification = SuspectTestification.objects.get(email_address=email_address)
-            suspect = Suspect.objects.get(email_address=email_address)            
+            testification = SuspectTestification.objects.filter(email_address=email_address).first()
+            suspect = Suspect.objects.filter(email_address=email_address).first()
+          
         except SuspectTestification.DoesNotExist:
             return render(request, 'interrogator_error.html')
         
