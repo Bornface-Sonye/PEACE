@@ -1,10 +1,12 @@
 from django.urls import path
-from .views import HomePageView,InterrogatorDashboardView, AddAnswerView, InterrogatorReportView, ErrorPageView, SuccessPageView
+from .views import enforcer_signup
+from .views import enforcer_login
+from .views import first_questioning, second_questioning, success
+
 urlpatterns = [
-    path('home/', HomePageView.as_view(), name='index'),
-    path('interrogator/dashboard/', InterrogatorDashboardView.as_view(), name='dashboard'),
-    path('interrogator/dashboard/answer/', AddAnswerView.as_view(), name='answer'),
-    path('interrogator/dashboard/report/', InterrogatorReportView.as_view(), name='report'),
-    path('error/', ErrorPageView.as_view(), name='error'),
-    path('success/', SuccessPageView.as_view(), name='success'),
-    ]
+    path('enforcer/signup/', enforcer_signup, name='enforcer_signup'),
+    path('enforcer/login/', enforcer_login, name='enforcer_login'),
+    path('first_questioning/', first_questioning, name='first_questioning'),
+    path('second_questioning/', second_questioning, name='second_questioning'),
+    path('success/', success, name='success'),
+]
