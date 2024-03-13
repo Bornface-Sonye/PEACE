@@ -15,6 +15,7 @@
 <body class=" login"
 <!-- Container -->
 <div id="container">
+    
     <!-- Header -->
     <div id="header">
         <div id="branding">
@@ -43,10 +44,11 @@
 <div id="content-main">
             <form action="{% url 'answer' %}" method="post" id="login-form"><input type="hidden" name="csrfmiddlewaretoken" value="evFeh8rljeglQiVRD5wPCfbJtC922K76B8cxzEmRBoVUkMx5PRVuDL0FbPQRNlvJ">
                 {% csrf_token %}
+                
                 <!-- Suspect Details Section -->
                 <div class="form-section">
                     <h2><big>Suspect Personal Information:</big></h2><br>
-                    <div class="form-field">
+                    <div class="form-field">                   
                         <label for="{{ form.case_description.id_for_label }}" class="required">Case Description:</label>
                         {{ form.case_description }}
                         {{ form.case_description.errors }}
@@ -56,26 +58,39 @@
                         <label for="{{ form.suspect_email.id_for_label }}" class="required">Suspect Email:</label>
                         {{ form.suspect_email }}
                         {{ form.suspect_email.errors }}
-                    </div><br>
-                        <div class="form-field">
-                            <label for="{{ form.trace.id_for_label }}" class="required">{{ form.trace.label }}</label>
-                            {{ form.trace }}
-                            {{ form.trace.errors }}
-                    </div>  
+                    </div><br>  
                 </div>
                 <br><br><br>
+
+                 <!-- Residential Details Section -->
+                 <div class="form-section">
+                    <h2><big>Residential  Information:</big></h2><br>
+                    <div class="form-field">                   
+                        <label for="{{ form.suspect_Residence_county.id_for_label }}" class="required">Suspect County of Residence:</label>
+                        {{ form.suspect_Residence_county }}
+                        {{ form.suspect_Residence_county.errors }}
+                    </div>
+                    <br><br>
+                    <div class="form-field">
+                        <label for="{{ form.incident_county.id_for_label }}" class="required">County Of the Incident:</label>
+                        {{ form.incident_county }}
+                        {{ form.incident_county.errors }}
+                    </div><br> 
+                </div>
+                <br><br><br>
+                
                 <!-- Answer Information Section -->
                 <div class="form-section">
                     <h2>Case Related Information:</h2><br>
                     <div class="form-field">
-                        <label for="{{ form.know_complainant.id_for_label }}" class="required">{{ form.know_complainant.label }}</label>
-                        {{ form.know_complainant }}
-                        {{ form.know_complainant.errors }}
+                        <label for="{{ form.trace.id_for_label }}" class="required">{{ form.trace.label }}</label>
+                        {{ form.trace }}
+                        {{ form.trace.errors }}
                     </div><br>
                     <div class="form-field">
-                        <label for="{{ form.reason_to_lie.id_for_label }}" class="required">{{ form.reason_to_lie.label }}</label>
-                        {{ form.reason_to_lie }}
-                        {{ form.reason_to_lie.errors }}
+                        <label for="{{ form.know_complainant.id_for_label }}" class="required">{{ form.know_complainat.label }}</label>
+                        {{ form.know_complainant }}
+                        {{ form.know_complainant.errors }}
                     </div><br>
                     <div class="form-field">
                         <label for="{{ form.involved_with_complainant.id_for_label }}" class="required">{{ form.involved_with_complainant.label }}</label>
@@ -83,9 +98,9 @@
                         {{ form.involved_with_complainant.errors }}
                     </div><br>
                     <div class="form-field">
-                        <label for="{{ form.involved_in_similar_case.id_for_label }}" class="required">{{ form.involved_in_similar_case.label }}</label>
-                        {{ form.involved_in_similar_case }}
-                        {{ form.involved_in_similar_case.errors }}
+                        <label for="{{ form.recidivist.id_for_label }}" class="required">{{ form.recidivist.label }}</label>
+                        {{ form.recidivist }}
+                        {{ form.recidivist.errors }}
                     </div>
                 </div>
                 <br><br><br>

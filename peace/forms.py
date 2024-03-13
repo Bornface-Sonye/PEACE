@@ -39,6 +39,7 @@ class AnswerForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'blue-input-box'}),
     )
     
+    
     suspect_email = forms.ModelChoiceField(
         queryset=Suspect.objects.all(),
         required=True,
@@ -46,24 +47,37 @@ class AnswerForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'blue-input-box'}),
     )
     
+    
+    suspect_Residence_county = forms.ModelChoiceField(
+        queryset=County.objects.all(),
+        required=True,
+        label='Suspect County of Residence: ',
+        widget=forms.Select(attrs={'class': 'blue-input-box'}),
+    )
+    
+    incident_county = forms.ModelChoiceField(
+        queryset=County.objects.all(),
+        required=True,
+        label='County Of the Incident: ',
+        widget=forms.Select(attrs={'class': 'blue-input-box'}),
+    )
+    
     class Meta:
         model = SuspectResponse
-        fields = ['case_description', 'suspect_email', 'trace', 'know_complainant', 'reason_to_lie', 'other_complaints', 'involved_with_complainant', 'involved_in_similar_case']
+        fields = ['case_description', 'suspect_email', 'suspect_Residence_county', 'incident_county', 'trace', 'know_complainant', 'involved_with_complainant', 'recidivist']
         labels = {
-            'trace': 'Are there any traces of the suspect in crime scene ?',
-            'know_complainant': 'Do you know the person filing the complaint ?',
-            'reason_to_lie': 'Can you think of any reason why someone would lie about this incident ?',
-            'involved_with_complainant': 'Have you involved in any row or quarrel  with complainant ?',
-            'involved_in_similar_case': 'Have you been involved in a similar case before ?',
+            'trace': 'Is there a trace of Suspect in Crime Scene ? ',
+            'know_complainant': 'Do the Suspect know the person filing the complaint ? ',
+            'involved_with_complainant': 'Have the Suspect involved in any quarrel  with complainant ? ',
+            'recidivist': 'Have the Suspect been involved in a similar case before ? ',
         }
         widgets = {
-            'trace': forms.TextInput(attrs={'class': 'black-input-box'}),
+            'trace': forms.Select(choices=[('Yes', 'Yes'), ('No', 'No')], attrs={'class': 'black-input-box'}),
             'know_complainant': forms.Select(choices=[('Yes', 'Yes'), ('No', 'No')], attrs={'class': 'black-input-box'}),
-            'reason_to_lie': forms.TextInput(attrs={'class': 'black-input-box'}),
             'involved_with_complainant': forms.Select(choices=[('Yes', 'Yes'), ('No', 'No')], attrs={'class': 'black-input-box'}),
-            'involved_in_similar_case': forms.Select(choices=[('Yes', 'Yes'), ('No', 'No')], attrs={'class': 'black-input-box'}),
+            'recidivist': forms.Select(choices=[('Yes', 'Yes'), ('No', 'No')], attrs={'class': 'black-input-box'}),
         }
-      
+
 class InterrogatorReportForm(forms.Form):
     serial_number = forms.CharField(
         max_length=8,

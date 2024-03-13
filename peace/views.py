@@ -27,9 +27,6 @@ from django.shortcuts import render, redirect
 from .forms import SignUpForm
 from .models import Enforcer
 
-def index(request):
-    return render(request, 'index.html')
-
 
 def signup(request):
     if request.method == 'POST':
@@ -95,22 +92,25 @@ class AddAnswerView(View):
         form = AnswerForm(request.POST)
 
         #Ensure that every entry is valid
+        # ['case_description', 'suspect_email', 'suspect_Residence_county', 
+        # 'incident_county', 'trace', 'know_complainant', 'involved_with_complainant', 'recidivist']
         if form.is_valid():
             case_description = form.cleaned_data['case_description']
             suspect_email = form.cleaned_data['suspect_email']
+            suspect_Residence_county = form.cleaned_data['suspect_Residence_county']
+            incident_county = form.cleaned_data['incident_county']
             trace = form.cleaned_data['trace']
             know_complainant = form.cleaned_data['know_complainant']
-            reason_to_lie = form.cleaned_data['reason_to_lie']
             involved_with_complainant = form.cleaned_data['involved_with_complainant']
-            involved_in_similar_case = form.cleaned_data['involved_in_similar_case']
+            involved_in_similar_case = form.cleaned_data['recidivist']
 
             # Generate serial number
             serial_number = generate_serial_number(national_id, reg_number, financial_year, institution)
            
             # Save the Interrogation Answers
-            statement = form.save(commit=False)
-            statement.serial_number = serial_number
-            statement.save()
+            suspectResponse = form.save(commit=False)
+            suspectResponse.serial_number = serial_number
+            suspectResponse.save()
 
             return redirect('success', serial_number=serial_number)
         else:
