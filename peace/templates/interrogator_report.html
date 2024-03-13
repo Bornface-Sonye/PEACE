@@ -1,19 +1,18 @@
-{% extends 'base_form.html' %}
-
-{% load static %}
+{% extends 'base.html' %}
 
 {% block content %}
+<h2>Suspect Report</h2>
 <!-- Display progress report details here -->
-<form method="post" action="{% url 'report' %}" class="report-form">
+<form method="post" action="{% url 'progress_report' %}" class="report-form">
     {% csrf_token %}
-    <div class="form-section">
-        <h2>Sentiment Analysis Information</h2>
-            <div class="form-field">
-                <label for="{{ form.email_address.id_for_label }}" class="required">Email Address:</label>
-                {{ form.email_address }}
-                {{ form.email_address.errors }}
-            </div>
-    </div>
+    <label for="serial_number">Serial Number:</label>
+    <input type="text" name="serial_number" class="serial-input" required>
+    <div class="button-container">
 <button type="submit" class="generate-button">Generate Report</button>
+<a href="{% url 'landing_page' %}" class="return-button">Return to Home</a>
+    </div>
 </form>
 {% endblock %}
+
+
+

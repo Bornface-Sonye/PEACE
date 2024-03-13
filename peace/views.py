@@ -1,7 +1,7 @@
 from django.views import View
 from .forms import AnswerForm,InterrogatorReportForm
 from django.shortcuts import render, redirect,get_object_or_404
-from .models import Suspect, Case, SuspectTestification
+from .models import Suspect, Case, SuspectResponse, SuspectCase, EnforcerCase
 from django.http import HttpResponse
 from django.conf import settings
 from reportlab.lib.pagesizes import landscape, letter
@@ -23,6 +23,166 @@ import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 import spacy as sp
 from django.conf import settings
+from django.shortcuts import render, redirect
+from .forms import SignUpForm
+from .models import Enforcer
+
+def index(request):
+    return render(request, 'index.html')
+
+
+def signup(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            enforcer = form.save(commit=False)
+            enforcer.set_password(form.cleaned_data['password_hash'])
+            enforcer.save()
+            return redirect('login')
+    else:
+        form = SignUpForm()
+    return render(request, 'signup.html', {'form': form})
+
+
+from .forms import LoginForm
+
+def login(request):
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            enforcer_email = form.cleaned_data['enforcer_email']
+            password = form.cleaned_data['password']
+            enforcer = Enforcer.objects.filter(enforcer_email=enforcer_email).first()
+            if enforcer and enforcer.check_password(password):
+                # Authentication successful
+                request.session['enforcer_email'] = enforcer.enforcer_email
+                return redirect('dashboard')
+            else:
+                # Authentication failed
+                return render(request, 'login.html', {'form': form, 'error': 'Invalid email or password'})
+    else:
+        form = LoginForm()
+    return render(request, 'login.html', {'form': form})
+
+
+
+
+
+class ErrorPageView(View):
+    def get(self,request):
+        return render(request, 'interrogator_error.html')
+
+class SuccessPageView(View):
+    def get(self,request):
+        return render(request, 'interrogator_success.html')
+
+class HomePageView(View):
+    def get(self,request):
+        return render(request, 'index.html')
+
+class InterrogatorDashboardView(View):
+    def get(self,request):
+        return render(request, 'interrogator_dashboard.html')
+
+class AddAnswerView(View):
+    template_name = 'answer_form.html'
+    
+    def get(self, request):
+        form = AnswerForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = AnswerForm(request.POST)
+
+        #Ensure that every entry is valid
+        if form.is_valid():
+            case_description = form.cleaned_data['case_description']
+            suspect_email = form.cleaned_data['suspect_email']
+            trace = form.cleaned_data['trace']
+            know_complainant = form.cleaned_data['know_complainant']
+            reason_to_lie = form.cleaned_data['reason_to_lie']
+            involved_with_complainant = form.cleaned_data['involved_with_complainant']
+            involved_in_similar_case = form.cleaned_data['involved_in_similar_case']
+
+            # Generate serial number
+            serial_number = generate_serial_number(national_id, reg_number, financial_year, institution)
+           
+            # Save the Interrogation Answers
+            statement = form.save(commit=False)
+            statement.serial_number = serial_number
+            statement.save()
+
+            return redirect('success', serial_number=serial_number)
+        else:
+            return render(request, self.template_name, {'form': form})
+        
+        
+def generate_serial_number(suspect_email, case_description):
+    data_string = f"{suspect_email}-{case_description}"
+    unique_identifier = str(uuid.uuid4())
+    combined_string = f"{data_string}-{unique_identifier}"
+    serial_number = hashlib.md5(combined_string.encode()).hexdigest()
+    return serial_number
+
+class InterrogatorReportView(View):
+    template_name = 'interrogator_report.html'
+
+    def get(self, request):
+        form = InterrogatorReportForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = InterrogatorReportForm(request.POST)
+
+        serial_number = request.POST.get('serial_number')
+        try:
+            testification = SuspectResponse.objects.get(serial_number=serial_number)
+            # Filter suspect email related to the serial number
+            suspect_email = Suspect.objects.filter(suspectcase__serial_number__in=SuspectResponse)
+            suspect = Suspect.objects.get(suspect_email=suspect_email)            
+        except SuspectResponse.DoesNotExist:
+            return render(request, 'interrogator_error.html', {'error_message': f'Suspect Report with serial number "{serial_number}" not found.'})
+        
+        #Supervised Learning
+        mlm = MachineLearningModel()
+        accuracy = mlm.accuracy()
+        #Sentiment Analysis
+        sent1 = SentimentAnalyser()
+        # Prediction
+        criminal = CriminalPrediction()
+        name = testification.suspect_email
+        age = suspect.age
+        recidivist = suspect.recidivist
+        firstResponse = testification.trace
+        secondResponse = testification.know_complainant
+        thirdResponse = testification.reason_to_lie
+        fifthResponse = testification.involved_with_complainant
+        sixthdResponse = testification.involved_in_similar_case
+        gender = suspect.gender
+        trace = sent1.is_obedient(firstResponse,name,age,gender)
+        obedient_score = sent1.is_obedient(firstResponse,name,age,gender)
+        consistency_score = sent1.calculate_consistency_score(firstResponse,SecondResponse)
+        criminal.data_retrieval(name,age,recidivist,trace,obedient_score,consistency_score,gender)
+        criminal.data_preparation()
+        result = criminal.result()
+
+        report_data = {
+            'accuracy':accuracy,
+            'suspect_details': {
+                'suspect_email': name,
+            },
+            'case_description': testification.case_description,
+            'result':result,
+        }
+
+        # Generate PDF
+        pdf_bytes = generate_pdf(report_data)
+
+        # Return the PDF file as a response
+        response = HttpResponse(pdf_bytes, content_type='interrogator/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{suspect_email}_report.pdf"'
+        return response 
+
 
 
 class SentimentAnalyser:
@@ -76,12 +236,12 @@ class MachineLearningModel:
         self.actual_labels = None
         self.file_path = os.path.join(settings.BASE_DIR, 'peace', 'peace', 'crime.csv')
         self.df = pd.read_csv(self.file_path)
-        self.feature_names = ['Age','DrugTest','Obedient','EmotionScore','ConfidenceScore','ConsistencyScore','Gender']
+        self.feature_names = ['Age','Recidivist','Trace','Obedient','ConsistencyScore','Gender']
         self.training_features = self.df[self.feature_names]
         self.outcome_name = ['Criminal']
         self.outcome_labels = self.df[self.outcome_name]
-        self.numeric_feature_names = ['Age','EmotionScore','ConfidenceScore','ConsistencyScore']
-        self.categorical_feature_names = ['DrugTest','Obedient','Gender']
+        self.numeric_feature_names = ['Age','ConsistencyScore']
+        self.categorical_feature_names = ['Recidivist','Trace','Obedient','Gender']
         ss = StandardScaler()
         ss.fit(self.training_features[self.numeric_feature_names])
         self.training_features[self.numeric_feature_names] = ss.transform(self.training_features[self.numeric_feature_names])
@@ -122,35 +282,34 @@ class CriminalPrediction:
         self.predictions = None
         self.file_path = os.path.join(settings.BASE_DIR, 'peace', 'peace', 'crime.csv')
         self.df = pd.read_csv(self.file_path)
-        self.feature_names = ['Age','DrugTest','Obedient','EmotionScore','ConfidenceScore','ConsistencyScore','Gender']
+        self.feature_names = ['Age','Recidivist','Trace','Obedient','ConsistencyScore','Gender']
         self.training_features = self.df[self.feature_names]
         self.outcome_name = ['Criminal']
         self.outcome_labels =self.df[self.outcome_name]
-        self.numeric_feature_names = ['Age','EmotionScore','ConfidenceScore','ConsistencyScore']
-        self.categorical_feature_names = ['DrugTest','Obedient','Gender']
+        self.numeric_feature_names = ['Age','ConsistencyScore']
+        self.categorical_feature_names = ['Recidivist', 'Trace','Obedient','Gender']
         self.ss = StandardScaler()
         self.ss.fit(self.training_features[self.numeric_feature_names])
         self.training_features[self.numeric_feature_names] = self.ss.transform(self.training_features[self.numeric_feature_names])
         self.training_features = pd.get_dummies(self.training_features,columns=self.categorical_feature_names)
         
     
-    def data_retrieval(self,name,age,drug_test,obedient,emotion_score,confidence_score,consistency_score,gender):
+    def data_retrieval(self,name,age,recidivist,trace,obedient,consistency_score,gender):
         self.new_data = pd.DataFrame([{'Name': name,
                         'Age': age,
-                        'DrugTest': drug_test,
+                        'Recidivist': recidivist,
+                        'Trace': trace,
                         'Obedient': obedient,
-                        'EmotionScore': emotion_score,
-                        'ConfidenceScore': confidence_score,
                         'ConsistencyScore': consistency_score,
                         'Gender': gender
                         }])
     
     def data_preparation(self):
         self.prediction = self.new_data.copy()
-        self.numeric_feature = ['Age','EmotionScore','ConfidenceScore','ConsistencyScore']
-        self.categorical_feature = ['DrugTest_Yes','DrugTest_No','Obedient_Yes','Obedient_No','Gender_Male','Gender_Female']
+        self.numeric_feature = ['Age','ConsistencyScore']
+        self.categorical_feature = ['Recidivist_Yes','Recidivist_No','Trace_Yes','Trace_No','Obedient_Yes','Obedient_No','Gender_Male','Gender_Female']
         self.prediction[self.numeric_feature] = self.scaler.transform(self.prediction[self.numeric_feature])
-        self.prediction= pd.get_dummies(self.prediction,columns=['DrugTest','Obedient','Gender'])
+        self.prediction= pd.get_dummies(self.prediction,columns=['Recidivist', 'Trace','Obedient','Gender'])
         for feature in self.categorical_feature:
             if feature not in self.prediction.columns:
                 self.prediction[feature] = 0 #Add missing categorical feature columns with 0 columns
@@ -163,103 +322,6 @@ class CriminalPrediction:
         for index, row in self.new_data.iterrows():
             result_str += f"Name: {row['Name']}, Age: {row['Age']}, Gender: {row['Gender']}, Predicted Criminal: {'Yes' if row['Criminal'] == 1 else 'No'}\n"
         return result_str
-
-
-class ErrorPageView(View):
-    def get(self,request):
-        return render(request, 'interrogator_error.html')
-
-class SuccessPageView(View):
-    def get(self,request):
-        return render(request, 'interrogator_success.html')
-
-class HomePageView(View):
-    def get(self,request):
-        return render(request, 'index.html')
-
-class InterrogatorDashboardView(View):
-    def get(self,request):
-        return render(request, 'interrogator_dashboard.html')
-
-class AddAnswerView(View):
-    template_name = 'answer_form.html'
-    
-    def get(self, request):
-        form = AnswerForm()
-        return render(request, self.template_name, {'form': form})
-
-    def post(self, request):
-        form = AnswerForm(request.POST)
-
-        #Ensure that every entry is valid
-        if form.is_valid():
-            email_address = form.cleaned_data['email_address']
-            case_description = form.cleaned_data['case_description']
-            answer_1 = form.cleaned_data['answer_1']
-            answer_2 = form.cleaned_data['answer_2']
-
-            # Save the Interrogation Answers
-            statement = form.save(commit=False)
-            statement.save()
-
-            return redirect('success')
-        else:
-            return render(request, self.template_name, {'form': form})
-
-class InterrogatorReportView(View):
-    template_name = 'interrogator_report.html'
-
-    def get(self, request):
-        form = InterrogatorReportForm()
-        return render(request, self.template_name, {'form': form})
-
-    def post(self, request):
-        form = InterrogatorReportForm(request.POST)
-
-        email_address = request.POST.get('email_address')
-        try:
-            testification = SuspectTestification.objects.get(email_address=email_address)
-            suspect = Suspect.objects.get(email_address=email_address)            
-        except SuspectTestification.DoesNotExist:
-            return render(request, 'interrogator_error.html')
-        
-        #Supervised Learning
-        mlm = MachineLearningModel()
-        accuracy = mlm.accuracy()
-        #Sentiment Analysis
-        sent1 = SentimentAnalyser()
-        # Prediction
-        criminal = CriminalPrediction()
-        name = testification.email_address
-        age = suspect.age
-        drug_test = suspect.drug_test
-        answer_1 = testification.answer_1
-        answer_2 = testification.answer_2
-        gender = suspect.gender
-        obedient_score = sent1.is_obedient(answer_1,name,age,gender)
-        emotion_score = sent1.calculate_emotion_score(answer_1)
-        consistency_score = sent1.calculate_consistency_score(answer_1,answer_2)
-        confidence_score = sent1.calculate_confidence_score(emotion_score,consistency_score)
-        criminal.data_retrieval(name,age,drug_test,obedient_score,emotion_score,confidence_score,consistency_score,gender)
-        criminal.data_preparation()
-        result = criminal.result()
-
-        report_data = {
-            'accuracy':accuracy,
-            'suspect_details': {
-                'email_address': name,
-            },
-            'case_description': testification.case_description,
-            'result':result,
-        }
-
-        # Generate PDF
-        pdf_bytes = generate_pdf(report_data)
-
-        # Return the PDF file as a response
-        response = HttpResponse(pdf_bytes, content_type='interrogator/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{email_address}_report.pdf"'
-        return response 
 
 def generate_pdf(report_data):
     buffer = BytesIO()
@@ -277,7 +339,7 @@ def generate_pdf(report_data):
     # Define table data
     table_data = [
         ["Suspect Report"],
-        ["Email Address:", report_data['suspect_details']['email_address']],
+        ["Suspect Email Address:", report_data['suspect_details']['suspect_email']],
         ["Case Description:", report_data['case_description']],
         ["Accuracy:", report_data['accuracy']],
         ["Result:", report_data['result']],
