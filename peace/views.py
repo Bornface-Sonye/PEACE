@@ -1,7 +1,8 @@
 from django.views import View
-from .forms import AnswerForm,InterrogatorReportForm
+from .forms import AnswerForm,InterrogatorReportForm, NewsForm, FeedbackForm, DepSignUpForm, DepLoginForm
 from django.shortcuts import render, redirect,get_object_or_404
-from .models import Suspect, Case, SuspectResponse, SuspectCase, EnforcerCase
+from .models import Suspect, Case, SuspectResponse, Department, BadgeNumber, Feedback
+from .models import Enforcer, CaseCollection, EnforcerCase, SuspectCase, New, County
 from django.http import HttpResponse
 from django.conf import settings
 from reportlab.lib.pagesizes import landscape, letter
@@ -33,7 +34,7 @@ def signup(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             enforcer = form.save(commit=False)
-            enforcer.set_password(form.cleaned_data['password_hash'])
+            enforcer.set_password(form.cleaned_data['password'])
             enforcer.save()
             return redirect('login')
     else:
@@ -47,12 +48,12 @@ def login(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
-            enforcer_email = form.cleaned_data['enforcer_email']
+            badge_no = form.cleaned_data['badge_no']
             password = form.cleaned_data['password']
-            enforcer = Enforcer.objects.filter(enforcer_email=enforcer_email).first()
+            enforcer = Enforcer.objects.filter(badge_no=badge_no).first()
             if enforcer and enforcer.check_password(password):
                 # Authentication successful
-                request.session['enforcer_email'] = enforcer.enforcer_email
+                request.session['badge_no'] = enforcer.badge_no
                 return redirect('dashboard')
             else:
                 # Authentication failed
@@ -60,6 +61,40 @@ def login(request):
     else:
         form = LoginForm()
     return render(request, 'login.html', {'form': form})
+
+
+def depsignup(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            department = form.save(commit=False)
+            department.set_password(form.cleaned_data['password'])
+            department.save()
+            return redirect('deplogin')
+    else:
+        form = DepSignUpForm()
+    return render(request, 'depsignup.html', {'form': form})
+
+
+from .forms import LoginForm
+
+def deplogin(request):
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            dep_no = form.cleaned_data['dep_no']
+            password = form.cleaned_data['password']
+            department = Deparment.objects.filter(dep_no=dep_no).first()
+            if department and department.check_password(password):
+                # Authentication successful
+                request.session['dep_no'] = department.dep_no
+                return redirect('login')
+            else:
+                # Authentication failed
+                return render(request, 'deplogin.html', {'form': form, 'error': 'Invalid email or password'})
+    else:
+        form = DepLoginForm()
+    return render(request, 'deplogin.html', {'form': form})
 
 
 
@@ -113,6 +148,58 @@ class AddAnswerView(View):
             suspectResponse.save()
 
             return redirect('success', serial_number=serial_number)
+        else:
+            return render(request, self.template_name, {'form': form})
+        
+        
+class AddNewsView(View):
+    template_name = 'news_form.html'
+    
+    def get(self, request):
+        form = NewsForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = NewsForm(request.POST)
+
+        #Ensure that every entry is valid
+        # ['county', 'news_code', 'news_header', 'news_body'] 
+        if form.is_valid():
+            county = form.cleaned_data['county']
+            news_code = form.cleaned_data['news_code']
+            news_header = form.cleaned_data['news_header']
+            news_body = form.cleaned_data['news_body']
+           
+            # Save the Inserted News
+            news = form.save(commit=False)
+            news.save()
+
+            return redirect('success')
+        else:
+            return render(request, self.template_name, {'form': form})
+        
+        
+class AddFeedbackView(View):
+    template_name = 'feedback_form.html'
+    
+    def get(self, request):
+        form = FeedbackForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = FeedbackForm(request.POST)
+
+        #Ensure that every entry is valid
+        # ['serial_number', 'feedback'] 
+        if form.is_valid():
+            serial_number = form.cleaned_data['serial_number']
+            feedback = form.cleaned_data['feedback']
+           
+            # Save the Prediction Feedback
+            news = form.save(commit=False)
+            news.save()
+
+            return redirect('success')
         else:
             return render(request, self.template_name, {'form': form})
         
