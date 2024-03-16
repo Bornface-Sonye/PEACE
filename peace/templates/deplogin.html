@@ -1,0 +1,25 @@
+{% extends 'base_auth.html' %}
+
+{% block title %}Sign in | Peace Digital{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'signup' %}">Department Sign in</a></h1>
+{% endblock %}
+
+{% block content %}
+<form action="{% url 'dashboard' %}" method="post" id="login-form">
+    {% csrf_token %}
+    <div class="form-row">
+        <label for="id_username" class="required">Department Number:</label>
+        <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username">
+    </div>
+    <div class="form-row">
+        <label for="id_password" class="required">Password:</label>
+        <input type="password" name="password" autocomplete="current-password" required id="id_password">
+        <input type="hidden" name="next" value="/admin/">
+    </div>
+    <div class="submit-row">
+        <input type="submit" value="Log in">
+    </div>
+</form>
+{% endblock %}

@@ -4,7 +4,7 @@ from django.contrib.auth.hashers import make_password, check_password
 class Enforcer(models.Model):
     officer_id = models.models.AutoField(primary_key=True)
     badge_no =models.ForeignKey(BadgeNumer, on_delete=models.CASCADE)
-    password = models.PasswordField(max_length=128)  # Store hashed passwords
+    password = models.CharField(max_length=128)  # Store hashed passwords
 
     def set_password(self, raw_password):
         self.password = make_password(raw_password)
@@ -19,7 +19,7 @@ class Enforcer(models.Model):
 class Department(models.Model):
     dep_id = models.models.AutoField(primary_key=True)
     dep_no =models.models.CharField(max_length=200, help_text="Enter a valid Department Number")
-    password = models.PasswordField(max_length=128)  # Store hashed passwords
+    password = models.CharField(max_length=128)  # Store hashed passwords
 
     def set_password(self, raw_password):
         self.password = make_password(raw_password)
@@ -32,7 +32,7 @@ class Department(models.Model):
     
     
 class BadgeNumber(models.Model):
-    badge_no = models.DecimalField(primary_key=True, max_length=6, help_text="Enter a valid Badge Number")
+    badge_no = models.DecimalField(primary_key=True, max_digits=6, help_text="Enter a valid Badge Number")
     first_name = models.CharField(max_length=200, help_text="Enter a valid First Name")
     last_name = models.CharField(max_length=200, help_text="Enter a valid Last Name")
     
@@ -49,7 +49,7 @@ class Suspect(models.Model):
     age = models.CharField(max_length=200, help_text="Enter a valid Age")
 
     def __str__(self):
-        return str(self.suspect_email)
+        return str(self.unique_id)
     
     
 class Feedback(models.Model):

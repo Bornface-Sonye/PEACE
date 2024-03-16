@@ -41,8 +41,29 @@ def signup(request):
         form = SignUpForm()
     return render(request, 'signup.html', {'form': form})
 
+from django.shortcuts import render, redirect
+from .forms import SignUpForm
+
+def signup(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            enforcer = form.save(commit=False)
+            enforcer.set_password(form.cleaned_data['password'])
+            enforcer.save()
+            return redirect('login')
+    else:
+        form = SignUpForm()
+    return render(request, 'signup.html', {'form': form})
+
+
+
 
 from .forms import LoginForm
+
+from django.shortcuts import render, redirect
+from .forms import LoginForm
+from .models import Enforcer
 
 def login(request):
     if request.method == 'POST':
@@ -57,10 +78,11 @@ def login(request):
                 return redirect('dashboard')
             else:
                 # Authentication failed
-                return render(request, 'login.html', {'form': form, 'error': 'Invalid email or password'})
+                form.add_error(None, 'Invalid badge number or password')
     else:
         form = LoginForm()
     return render(request, 'login.html', {'form': form})
+
 
 
 def depsignup(request):

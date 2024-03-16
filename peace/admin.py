@@ -1,8 +1,8 @@
 from django.contrib import admin
+from .models import Suspect, Case, SuspectResponse, Department, BadgeNumber, Feedback
+from .models import Enforcer, CaseCollection, EnforcerCase, SuspectCase, New, County
 
-from . models import (Suspect, Case, SuspectResponse, Enforcer, EnforcerCase, SuspectCase)
-
-models_to_register = [Suspect, Case, SuspectResponse, Enforcer, EnforcerCase, SuspectCase]
+models_to_register = [Suspect, Case, SuspectResponse, Department, BadgeNumber, Feedback, Enforcer, CaseCollection, EnforcerCase, SuspectCase, New, County]
 
 for model in models_to_register:
     admin.site.register(model)

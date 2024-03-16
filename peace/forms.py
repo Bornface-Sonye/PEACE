@@ -2,24 +2,28 @@ from django import forms
 from .models import Suspect, Case, SuspectResponse, Department, BadgeNumber, Feedback
 from .models import Enforcer, CaseCollection, EnforcerCase, SuspectCase, New, County
 
+from django import forms
+from .models import BadgeNumber, Enforcer
+
 class SignUpForm(forms.ModelForm):
-    
-    badge_no = forms.ModelChoiceField(
-        queryset=BadgeNumber.objects.all(),
-        required=True,
-        label='Badge Number: ',
-        widget=forms.Select(attrs={'class': 'black-input-box'}),
-    )
-    badge_no = forms.DecimalField()
-    confirm_password = forms.PasswordField(widget=forms.PasswordInput)
+    confirm_password = forms.CharField(widget=forms.PasswordInput)
 
     class Meta:
         model = Enforcer
-        fields = ['badge_no', 'password']  # Update to use 'password_hash' field
+        fields = ['badge_no', 'password']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['badge_no'] = forms.ModelChoiceField(
+            queryset=BadgeNumber.objects.all(),
+            required=True,
+            label='Badge Number:',
+            widget=forms.Select(attrs={'class': 'black-input-box'})
+        )
 
     def clean(self):
         cleaned_data = super().clean()
-        password = cleaned_data.get("password")  # Update to use 'password_hash' field
+        password = cleaned_data.get("password")
         confirm_password = cleaned_data.get("confirm_password")
 
         if password != confirm_password:
@@ -29,21 +33,24 @@ class SignUpForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        instance.set_password(self.cleaned_data["password"])  # Update to use 'password_hash' field
+        instance.set_custom_password(self.cleaned_data["password"])
         if commit:
             instance.save()
         return instance
 
 
+
+from django import forms
+
 class LoginForm(forms.Form):
-    badge_no = forms.DecimalField()
-    password = forms.PasswordField(widget=forms.PasswordInput)
-    
+    badge_no = forms.DecimalField(label='Badge Number')
+    password = forms.CharField(label='Password', widget=forms.PasswordInput)
+
     
     
 class DepSignUpForm(forms.ModelForm):
     dep_no = forms.CharField()
-    confirm_password = forms.PasswordField(widget=forms.PasswordInput)
+    confirm_password = forms.CharField(widget=forms.PasswordInput)
 
     class Meta:
         model = Department
@@ -69,7 +76,7 @@ class DepSignUpForm(forms.ModelForm):
 
 class DepLoginForm(forms.Form):
     dep_no = forms.CharField()
-    password = forms.PasswordField(widget=forms.PasswordInput)
+    password = forms.CharField(widget=forms.PasswordInput)
 
 class AnswerForm(forms.ModelForm):
     case_description = forms.ModelChoiceField(
