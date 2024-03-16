@@ -97,7 +97,7 @@ class DepLoginView(View):
                 return redirect('index')  # Redirect to the dashboard upon successful login
             else:
                 # Authentication failed
-                form.add_error(None, 'Invalid badge number or password')
+                form.add_error(None, 'Invalid Department number or password')
         return render(request, 'deplogin.html', {'form': form})
 
 
