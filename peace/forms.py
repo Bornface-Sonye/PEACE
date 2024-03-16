@@ -3,7 +3,10 @@ from .models import Suspect, Case, SuspectResponse, Department, BadgeNumber, Fee
 from .models import Enforcer, CaseCollection, EnforcerCase, SuspectCase, New, County
 
 from django import forms
-from .models import BadgeNumber, Enforcer
+from .models import BadgeNumber, Enforcer, DepartmentNumber
+
+from django import forms
+from .models import Enforcer, BadgeNumber
 
 class SignUpForm(forms.ModelForm):
     confirm_password = forms.CharField(widget=forms.PasswordInput)
@@ -33,28 +36,33 @@ class SignUpForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        instance.set_custom_password(self.cleaned_data["password"])
+        instance.set_password(self.cleaned_data["password"])
         if commit:
             instance.save()
         return instance
-
-
-
+    
 from django import forms
 
 class LoginForm(forms.Form):
     badge_no = forms.DecimalField(label='Badge Number')
     password = forms.CharField(label='Password', widget=forms.PasswordInput)
-
-    
     
 class DepSignUpForm(forms.ModelForm):
-    dep_no = forms.CharField()
     confirm_password = forms.CharField(widget=forms.PasswordInput)
 
     class Meta:
         model = Department
         fields = ['dep_no', 'password']  # Update to use 'password_hash' field
+        
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['dep_no'] = forms.ModelChoiceField(
+            queryset=DepartmentNumber.objects.all(),
+            required=True,
+            label='Department Number:',
+            widget=forms.Select(attrs={'class': 'black-input-box'})
+        )
 
     def clean(self):
         cleaned_data = super().clean()
@@ -73,10 +81,10 @@ class DepSignUpForm(forms.ModelForm):
             instance.save()
         return instance
 
-
 class DepLoginForm(forms.Form):
-    dep_no = forms.CharField()
-    password = forms.CharField(widget=forms.PasswordInput)
+    dep_no = forms.CharField(label='Department Number')
+    password = forms.CharField(label='Password', widget=forms.PasswordInput)
+    
 
 class AnswerForm(forms.ModelForm):
     case_description = forms.ModelChoiceField(
@@ -134,7 +142,7 @@ class NewsForm(forms.ModelForm):
     )
     
     class Meta:
-        model = News
+        model = New
         fields = ['county', 'news_code', 'news_header', 'news_body']
         labels = {
             'news_code': 'The class of News You are inserting: ? ',

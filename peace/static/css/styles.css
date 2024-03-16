@@ -51,7 +51,7 @@ header nav ul li a {
 }
 
 header nav ul li a:hover {
-    color: #091fe9; /* Change color on hover */
+    color: #12163a; /* Change color on hover */
 }
 
 main {
@@ -76,7 +76,7 @@ section p {
 }
 
 section#contact {
-    background-color: #a41ae4; /* Golden yellow background */
+    background-color: #35065c; /* Golden yellow background */
 }
 
 section#newsletter {

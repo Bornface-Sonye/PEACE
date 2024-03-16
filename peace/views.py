@@ -28,6 +28,8 @@ from django.shortcuts import render, redirect
 from .forms import SignUpForm
 from .models import Enforcer
 
+from django.shortcuts import render, redirect
+from .forms import SignUpForm, DepSignUpForm, DepLoginForm
 
 def signup(request):
     if request.method == 'POST':
@@ -40,54 +42,11 @@ def signup(request):
     else:
         form = SignUpForm()
     return render(request, 'signup.html', {'form': form})
-
-from django.shortcuts import render, redirect
-from .forms import SignUpForm
-
-def signup(request):
-    if request.method == 'POST':
-        form = SignUpForm(request.POST)
-        if form.is_valid():
-            enforcer = form.save(commit=False)
-            enforcer.set_password(form.cleaned_data['password'])
-            enforcer.save()
-            return redirect('login')
-    else:
-        form = SignUpForm()
-    return render(request, 'signup.html', {'form': form})
-
-
-
-
-from .forms import LoginForm
-
-from django.shortcuts import render, redirect
-from .forms import LoginForm
-from .models import Enforcer
-
-def login(request):
-    if request.method == 'POST':
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            badge_no = form.cleaned_data['badge_no']
-            password = form.cleaned_data['password']
-            enforcer = Enforcer.objects.filter(badge_no=badge_no).first()
-            if enforcer and enforcer.check_password(password):
-                # Authentication successful
-                request.session['badge_no'] = enforcer.badge_no
-                return redirect('dashboard')
-            else:
-                # Authentication failed
-                form.add_error(None, 'Invalid badge number or password')
-    else:
-        form = LoginForm()
-    return render(request, 'login.html', {'form': form})
-
 
 
 def depsignup(request):
     if request.method == 'POST':
-        form = SignUpForm(request.POST)
+        form = DepSignUpForm(request.POST)
         if form.is_valid():
             department = form.save(commit=False)
             department.set_password(form.cleaned_data['password'])
@@ -98,29 +57,51 @@ def depsignup(request):
     return render(request, 'depsignup.html', {'form': form})
 
 
+from django.shortcuts import render, redirect
+from django.views import View
 from .forms import LoginForm
+from .models import Enforcer
 
-def deplogin(request):
-    if request.method == 'POST':
+class LoginView(View):
+    def get(self, request):
+        form = LoginForm()
+        return render(request, 'login.html', {'form': form})
+
+    def post(self, request):
         form = LoginForm(request.POST)
+        if form.is_valid():
+            badge_no = form.cleaned_data['badge_no']
+            password = form.cleaned_data['password']
+            enforcer = Enforcer.objects.filter(badge_no=badge_no).first()
+            if enforcer and enforcer.check_password(password):
+                # Authentication successful
+                return redirect('dashboard')  # Redirect to the dashboard upon successful login
+            else:
+                # Authentication failed
+                form.add_error(None, 'Invalid badge number or password')
+        return render(request, 'login.html', {'form': form})
+
+class DepLoginView(View):
+    def get(self, request):
+        form = DepLoginForm()
+        return render(request, 'deplogin.html', {'form': form})
+
+    def post(self, request):
+        form = DepLoginForm(request.POST)
         if form.is_valid():
             dep_no = form.cleaned_data['dep_no']
             password = form.cleaned_data['password']
-            department = Deparment.objects.filter(dep_no=dep_no).first()
+            department = Department.objects.filter(dep_no=dep_no).first()
             if department and department.check_password(password):
                 # Authentication successful
-                request.session['dep_no'] = department.dep_no
-                return redirect('login')
+                return redirect('index')  # Redirect to the dashboard upon successful login
             else:
                 # Authentication failed
-                return render(request, 'deplogin.html', {'form': form, 'error': 'Invalid email or password'})
-    else:
-        form = DepLoginForm()
-    return render(request, 'deplogin.html', {'form': form})
+                form.add_error(None, 'Invalid badge number or password')
+        return render(request, 'deplogin.html', {'form': form})
 
 
-
-
+from .forms import LoginForm
 
 class ErrorPageView(View):
     def get(self,request):
@@ -137,6 +118,11 @@ class HomePageView(View):
 class InterrogatorDashboardView(View):
     def get(self,request):
         return render(request, 'interrogator_dashboard.html')
+    
+    
+class DashboardView(View):
+    def get(self,request):
+        return render(request, 'dashboard.html')
 
 class AddAnswerView(View):
     template_name = 'answer_form.html'
