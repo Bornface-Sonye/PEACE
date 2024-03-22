@@ -30,9 +30,10 @@
     border-radius: 4px;
     overflow: hidden;
     width: 28em;
-    min-width: 300px;
+    min-width: 600px;
     margin: 100px auto;
     height: auto;
+    text-align: center;
 }
 
 .login .form-row {
@@ -46,7 +47,7 @@
 
 .login .form-row #id_username, .login .form-row #id_password {
     padding: 8px;
-    width: 100%;
+    width: 90%;
     box-sizing: border-box;
 }
 

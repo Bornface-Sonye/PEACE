@@ -1,8 +1,13 @@
+import hashlib
+import uuid
+#from .utils import GeneratePDFReportView
+from tabulate import tabulate
+from django.shortcuts import get_object_or_404
 from django.views import View
-from .forms import AnswerForm,InterrogatorReportForm, NewsForm, FeedbackForm, DepSignUpForm, DepLoginForm
+from .forms import AnswerForm,InterrogatorReportForm, DepSignUpForm, DepLoginForm
 from django.shortcuts import render, redirect,get_object_or_404
-from .models import Suspect, Case, SuspectResponse, Department, BadgeNumber, Feedback
-from .models import Enforcer, CaseCollection, EnforcerCase, SuspectCase, New, County
+from .models import Suspect, Case, SuspectResponse, Department, BadgeNumber
+from .models import Enforcer, CaseCollection, EnforcerCase, SuspectCase, County
 from django.http import HttpResponse
 from django.conf import settings
 from reportlab.lib.pagesizes import landscape, letter
@@ -105,11 +110,12 @@ from .forms import LoginForm
 
 class ErrorPageView(View):
     def get(self,request):
-        return render(request, 'interrogator_error.html')
-
+        return render(request, 'interrogator_error.html')  
+      
 class SuccessPageView(View):
-    def get(self,request):
-        return render(request, 'interrogator_success.html')
+    def get(self, request, *args, **kwargs):
+        serial_number = self.kwargs.get('serial_number', None)
+        return render(request, 'interrogator_success.html', {'serial_number': serial_number})
 
 class HomePageView(View):
     def get(self,request):
@@ -122,7 +128,15 @@ class InterrogatorDashboardView(View):
     
 class DashboardView(View):
     def get(self,request):
-        return render(request, 'dashboard.html')
+        return render(request, 'dashboards.html')
+
+def generate_serial_number(unique_id, case_description):
+    data_string = f"{unique_id}-{case_description}"
+    unique_identifier = str(uuid.uuid4())
+    combined_string = f"{data_string}-{unique_identifier}"
+    serial_number = hashlib.md5(combined_string.encode()).hexdigest()
+    return serial_number
+
 
 class AddAnswerView(View):
     template_name = 'answer_form.html'
@@ -133,94 +147,42 @@ class AddAnswerView(View):
 
     def post(self, request):
         form = AnswerForm(request.POST)
-
+    
         #Ensure that every entry is valid
         # ['case_description', 'suspect_email', 'suspect_Residence_county', 
         # 'incident_county', 'trace', 'know_complainant', 'involved_with_complainant', 'recidivist']
         if form.is_valid():
             case_description = form.cleaned_data['case_description']
-            suspect_email = form.cleaned_data['suspect_email']
-            suspect_Residence_county = form.cleaned_data['suspect_Residence_county']
-            incident_county = form.cleaned_data['incident_county']
+            unique_id = form.cleaned_data['unique_id']
             trace = form.cleaned_data['trace']
             know_complainant = form.cleaned_data['know_complainant']
             involved_with_complainant = form.cleaned_data['involved_with_complainant']
-            involved_in_similar_case = form.cleaned_data['recidivist']
+            recidivist = form.cleaned_data['recidivist']
 
             # Generate serial number
-            serial_number = generate_serial_number(national_id, reg_number, financial_year, institution)
+            serial_number = generate_serial_number(unique_id, case_description)
            
             # Save the Interrogation Answers
             suspectResponse = form.save(commit=False)
             suspectResponse.serial_number = serial_number
             suspectResponse.save()
-
+            
             return redirect('success', serial_number=serial_number)
+            
         else:
             return render(request, self.template_name, {'form': form})
-        
-        
-class AddNewsView(View):
-    template_name = 'news_form.html'
-    
-    def get(self, request):
-        form = NewsForm()
-        return render(request, self.template_name, {'form': form})
 
-    def post(self, request):
-        form = NewsForm(request.POST)
 
-        #Ensure that every entry is valid
-        # ['county', 'news_code', 'news_header', 'news_body'] 
-        if form.is_valid():
-            county = form.cleaned_data['county']
-            news_code = form.cleaned_data['news_code']
-            news_header = form.cleaned_data['news_header']
-            news_body = form.cleaned_data['news_body']
-           
-            # Save the Inserted News
-            news = form.save(commit=False)
-            news.save()
 
-            return redirect('success')
-        else:
-            return render(request, self.template_name, {'form': form})
-        
-        
-class AddFeedbackView(View):
-    template_name = 'feedback_form.html'
-    
-    def get(self, request):
-        form = FeedbackForm()
-        return render(request, self.template_name, {'form': form})
 
-    def post(self, request):
-        form = FeedbackForm(request.POST)
-
-        #Ensure that every entry is valid
-        # ['serial_number', 'feedback'] 
-        if form.is_valid():
-            serial_number = form.cleaned_data['serial_number']
-            feedback = form.cleaned_data['feedback']
-           
-            # Save the Prediction Feedback
-            news = form.save(commit=False)
-            news.save()
-
-            return redirect('success')
-        else:
-            return render(request, self.template_name, {'form': form})
-        
-        
-def generate_serial_number(suspect_email, case_description):
-    data_string = f"{suspect_email}-{case_description}"
-    unique_identifier = str(uuid.uuid4())
-    combined_string = f"{data_string}-{unique_identifier}"
-    serial_number = hashlib.md5(combined_string.encode()).hexdigest()
-    return serial_number
-
+from django.shortcuts import render, get_object_or_404
+from django.views import View
+'''from .forms import InterrogatorReportForm
+from .models import SuspectResponse
+from .services import MachineLearningModel, SentimentAnalyser, CriminalPrediction
+'''
 class InterrogatorReportView(View):
-    template_name = 'interrogator_report.html'
+    template_name = 'report.html'
 
     def get(self, request):
         form = InterrogatorReportForm()
@@ -229,54 +191,46 @@ class InterrogatorReportView(View):
     def post(self, request):
         form = InterrogatorReportForm(request.POST)
 
-        serial_number = request.POST.get('serial_number')
-        try:
-            testification = SuspectResponse.objects.get(serial_number=serial_number)
-            # Filter suspect email related to the serial number
-            suspect_email = Suspect.objects.filter(suspectcase__serial_number__in=SuspectResponse)
-            suspect = Suspect.objects.get(suspect_email=suspect_email)            
-        except SuspectResponse.DoesNotExist:
-            return render(request, 'interrogator_error.html', {'error_message': f'Suspect Report with serial number "{serial_number}" not found.'})
-        
-        #Supervised Learning
-        mlm = MachineLearningModel()
-        accuracy = mlm.accuracy()
-        #Sentiment Analysis
-        sent1 = SentimentAnalyser()
-        # Prediction
-        criminal = CriminalPrediction()
-        name = testification.suspect_email
-        age = suspect.age
-        recidivist = suspect.recidivist
-        firstResponse = testification.trace
-        secondResponse = testification.know_complainant
-        thirdResponse = testification.reason_to_lie
-        fifthResponse = testification.involved_with_complainant
-        sixthdResponse = testification.involved_in_similar_case
-        gender = suspect.gender
-        trace = sent1.is_obedient(firstResponse,name,age,gender)
-        obedient_score = sent1.is_obedient(firstResponse,name,age,gender)
-        consistency_score = sent1.calculate_consistency_score(firstResponse,SecondResponse)
-        criminal.data_retrieval(name,age,recidivist,trace,obedient_score,consistency_score,gender)
-        criminal.data_preparation()
-        result = criminal.result()
+        if form.is_valid():
+            serial_number = form.cleaned_data['serial_number']
+            try:
+                suspect_response = get_object_or_404(SuspectResponse, serial_number=serial_number)
+                suspect = suspect_response.unique_id
+            except SuspectResponse.DoesNotExist:
+                return render(request, 'interrogator_error.html', {'error_message': f'Suspect Report with serial number "{serial_number}" not found.'})
+            
+            mlm = MachineLearningModel()
+            accuracy = mlm.accuracy()
+            sent1 = SentimentAnalyser()
+            criminal = CriminalPrediction()
+            name = suspect.unique_id
+            age = suspect.age
+            gender = suspect.gender
+            recidivist = suspect_response.recidivist
+            firstResponse = suspect_response.trace
+            secondResponse = suspect_response.know_complainant
+            consistency_score = sent1.calculate_consistency_score(firstResponse, secondResponse)
+            trace = sent1.is_obedient(firstResponse, name, age, gender)
+            obedient_score = sent1.is_obedient(firstResponse, name, age, gender)
+            criminal.data_retrieval(name, age, recidivist, trace, obedient_score, consistency_score, gender)
+            criminal.data_preparation()
+            result = criminal.result()
 
-        report_data = {
-            'accuracy':accuracy,
-            'suspect_details': {
-                'suspect_email': name,
-            },
-            'case_description': testification.case_description,
-            'result':result,
-        }
+            report_data = {
+                'accuracy': accuracy,
+                'name': name,
+                'case_description': suspect_response.case_description,
+                'result': result,
+                
+            }
+            return render(request, 'report.html', {'report_data': report_data})
+        else:
+            return render(request, self.template_name, {'form': form})
 
-        # Generate PDF
-        pdf_bytes = generate_pdf(report_data)
 
-        # Return the PDF file as a response
-        response = HttpResponse(pdf_bytes, content_type='interrogator/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{suspect_email}_report.pdf"'
-        return response 
+
+    
+
 
 
 
@@ -359,7 +313,7 @@ class MachineLearningModel:
         acc = accuracy_score(self.actual_labels, self.pred_labels)
         class_stats = classification_report(self.actual_labels, self.pred_labels)
 
-        accuracy_row = f"Accuracy: {acc * 100:.2f}%"
+        accuracy_row = f"{acc * 100:.2f}%"
         class_stats_row = "Classification Stats:\n" + class_stats
 
         return accuracy_row
@@ -411,13 +365,26 @@ class CriminalPrediction:
         self.prediction = self.prediction[self.training_features.columns]
         self.predictions = self.model.predict(self.prediction)
         self.new_data['Criminal'] = self.predictions
-    
-    def result(self):
-        result_str = "Prediction Result:\n"
-        for index, row in self.new_data.iterrows():
-            result_str += f"Name: {row['Name']}, Age: {row['Age']}, Gender: {row['Gender']}, Predicted Criminal: {'Yes' if row['Criminal'] == 1 else 'No'}\n"
-        return result_str
 
+    def result(self):
+        result_str = "\t\t"
+        for index, row in self.new_data.iterrows():
+            result_str += f"{'Yes' if row['Criminal'] == 1 else 'No'}"
+        return result_str
+       
+
+        
+    
+
+    
+    
+
+    
+
+
+
+
+'''
 def generate_pdf(report_data):
     buffer = BytesIO()
     pdf_canvas = SimpleDocTemplate(buffer, pagesize=landscape(letter))
@@ -479,3 +446,4 @@ def generate_pdf(report_data):
     buffer.close()
 
     return pdf_bytes
+'''

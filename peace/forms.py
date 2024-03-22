@@ -1,6 +1,6 @@
 from django import forms
-from .models import Suspect, Case, SuspectResponse, Department, BadgeNumber, Feedback
-from .models import Enforcer, CaseCollection, EnforcerCase, SuspectCase, New, County
+from .models import Suspect, Case, SuspectResponse, Department, BadgeNumber
+from .models import Enforcer, CaseCollection, EnforcerCase, SuspectCase, County
 
 from django import forms
 from .models import BadgeNumber, Enforcer, DepartmentNumber
@@ -95,31 +95,17 @@ class AnswerForm(forms.ModelForm):
     )
     
     
-    suspect_email = forms.ModelChoiceField(
+    unique_id = forms.ModelChoiceField(
         queryset=Suspect.objects.all(),
         required=True,
-        label='Suspect Email Address',
+        label='Suspect Unique Identity:',
         widget=forms.Select(attrs={'class': 'blue-input-box'}),
     )
     
-    
-    suspect_Residence_county = forms.ModelChoiceField(
-        queryset=County.objects.all(),
-        required=True,
-        label='Suspect County of Residence: ',
-        widget=forms.Select(attrs={'class': 'blue-input-box'}),
-    )
-    
-    incident_county = forms.ModelChoiceField(
-        queryset=County.objects.all(),
-        required=True,
-        label='County Of the Incident: ',
-        widget=forms.Select(attrs={'class': 'blue-input-box'}),
-    )
     
     class Meta:
         model = SuspectResponse
-        fields = ['case_description', 'suspect_email', 'suspect_Residence_county', 'incident_county', 'trace', 'know_complainant', 'involved_with_complainant', 'recidivist']
+        fields = ['case_description', 'unique_id', 'trace', 'know_complainant', 'involved_with_complainant', 'recidivist']
         labels = {
             'trace': 'Is there a trace of Suspect in Crime Scene ? ',
             'know_complainant': 'Do the Suspect know the person filing the complaint ? ',
@@ -132,54 +118,10 @@ class AnswerForm(forms.ModelForm):
             'involved_with_complainant': forms.Select(choices=[('Yes', 'Yes'), ('No', 'No')], attrs={'class': 'black-input-box'}),
             'recidivist': forms.Select(choices=[('Yes', 'Yes'), ('No', 'No')], attrs={'class': 'black-input-box'}),
         }
-     
-class NewsForm(forms.ModelForm):
-    county = forms.ModelChoiceField(
-        queryset=County.objects.all(),
-        required=True,
-        label='County: ',
-        widget=forms.Select(attrs={'class': 'blue-input-box'}),
-    )
-    
-    class Meta:
-        model = New
-        fields = ['county', 'news_code', 'news_header', 'news_body']
-        labels = {
-            'news_code': 'The class of News You are inserting: ? ',
-            'news_header': 'The Title that will be displayed: ? ',
-            'news_body': 'The main Content, Be Conscise ? ',
-        }
-        widgets = {
-            'news_code': forms.Select(choices=[('SEC45', 'SEC45'), ('SEC67', 'SEC67'), ('SEC79', 'SEC79')], attrs={'class': 'black-input-box'}),
-            'news_header': forms.TextInput(attrs={'class': 'blue-input-box'}),
-            'news_body': forms.TextInput(attrs={'class': 'blue-input-box'}),
-            
-        }
-
-
-class FeedbackForm(forms.ModelForm):
-    serial_number = forms.ModelChoiceField(
-        queryset = SuspectResponse.objects.all(),
-        required=True,
-        label = 'Serial Number: ',
-        widget = forms.Select(attrs={'class': 'blue-input-box'}),
-    )
-
-    class Meta:
-        model = Feedback
-        fields = ['serial_number', 'feedback']
-        labels = {
-            'feedback': 'Note Your Feedback Here: ? ',
-            
-        }
-        widgets = {
-            'feedback': forms.TextInput(attrs={'class': 'blue-input-box'}),
-        }
-
 
 class InterrogatorReportForm(forms.Form):
     serial_number = forms.CharField(
-        max_length=8,
-        help_text = "Enter the 8-alphanumeric serial number",
+        max_length=50,
+        help_text = "Enter the 50-alphanumeric serial number",
         widget=forms.TextInput(attrs={'class': 'blue-input-box'})
     )

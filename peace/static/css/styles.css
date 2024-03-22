@@ -61,26 +61,26 @@ main {
 section {
     margin-bottom: 50px;
     border-radius: 10px; /* Rounded corners for sections */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Add shadow for depth */
+    box-shadow: 0 4px 10px rgba(248, 247, 247, 0.1); /* Add shadow for depth */
     padding: 60px; /* Increased padding for spacing */
 }
 
 section h2 {
     margin-bottom: 30px;
     font-size: 28px; /* Increase font size */
-    color: #333;
+    color: #111010;
 }
 
 section p {
-    color: #666;
+    color: #f3eeee;
 }
 
 section#contact {
-    background-color: #35065c; /* Golden yellow background */
+    background-color: #fcfafd; /* Golden yellow background */
 }
 
 section#newsletter {
-    background-color: #87ceeb; /* Sky blue background */
+    background-color: #f4f7f7; /* Sky blue background */
 }
 
 footer {
@@ -120,7 +120,8 @@ footer p {
     display: flex;
     align-items: center;
     background-attachment: fixed;
-    background-color: oldlace
+    background-color: rgb(250, 249, 248);
+    color: black;
 }
 
 .left-container {
@@ -146,7 +147,7 @@ footer p {
      /*background-image: url('img7.jpg'); /* Set background image */
     background-size: cover; /* Ensure the image covers the entire container */
     background-position: center; /* Center the background image */
-    color: #fff; /* Set text color to ensure readability */
+    color: #0e0d0d; /* Set text color to ensure readability */
     padding: 60px; /* Increased padding for spacing */
     display: flex; /* Use flexbox to center content vertically */
     flex-direction: column; /* Stack content vertically */

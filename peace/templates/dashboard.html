@@ -1,15 +1,18 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en-us" dir="ltr">
-    <head>
-        <title>Dashboard | Peace Digital</title>
-        <link rel="stylesheet" href="{% static 'css/base.css' %}">
-        <link rel="stylesheet" href="{% static 'css/dark_mode.css' %}">
-        <script src="{% static 'js/theme.js' %}" defer></script>
-        <link rel="stylesheet" href="{% static 'css/login.css' %}">
-        <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
-        <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
-        <meta name="robots" content="NONE,NOARCHIVE">
+<head>
+<title>Peace Digital | Response and Report</title>
+<link rel="stylesheet" href="{% static 'css/base.css' %}">
+<link rel="stylesheet" href="{% static 'css/dark_mode.css' %}">
+  
+<script src="{% static 'js/theme.js' %}" defer></script>
+<script src="{% static 'js/content.js' %}" defer></script>
+<script src="{% static 'js/nav_sidebar.js' %}" defer></script> 
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+<meta name="robots" content="NONE,NOARCHIVE">
 </head>
 <body class=" dashboard"
 <!-- Container -->
@@ -21,13 +24,15 @@
         </div>
         <div id="user-tools">
                 Welcome,
-                <strong>Officer</strong>.
-                    <a href="/">View site</a> /
+                <strong>Sir</strong>. 
+                    <a href="/">View site</a>
                 <a href="index.html">Change password</a> /
+                
                 <form id="logout-form" method="post" action="/admin/logout/">
                     <input type="hidden" name="csrfmiddlewaretoken" value="BKHCwX7kGndzJzUqrMc6PFPsqk0e3KhHyOz1saD3hyeYdwESlWNBmkUrNDfL69wg">
                     <button type="submit">Log out</button>
-                </form>       
+                </form>
+                
 <button class="theme-toggle">
   <div class="visually-hidden theme-label-when-auto">Toggle theme (current theme: auto)</div>
   <div class="visually-hidden theme-label-when-light">Toggle theme (current theme: light)</div>
@@ -41,7 +46,7 @@
   <svg aria-hidden="true" class="theme-icon-when-light">
     <use xlink:href="#icon-sun" />
   </svg>
-</button>            
+</button>     
         </div>  
     </div>
     <!-- END Header -->
@@ -49,39 +54,28 @@
       <div id="content-start" class="content" tabindex="-1">
         <!-- Content -->
         <div id="content" class="colMS">
-          <h1>Peace Law Enfocer Site</h1>
+          
+          <h1>Peace Law Enfocer Site</h1>    
 <div id="content-main">
     <div class="app-auth module">
       <table>
         <caption>
-          <a href="index.html" class="section" title="Record Suspect Response">Record Suspect Response</a>
+          <a href="index.html" class="section" title="Record Suspect Response">RECORD SUSPECT RESPONSE</a>
         </caption>
           <tr class="model-group">
-              <th scope="row">Suspect Response 1</a></th>
-              <td><a href="index.html" class="addlink">Add</a></td>
-                <td><a href="index.html" class="changelink">Change</a></td>
-          </tr>
-          <tr class="model-user">
-              <th scope="row">Suspect Response 2</a></th>
-              <td><a href="index.html" class="addlink">Add</a></td>
-                <td><a href="index.html" class="changelink">Change</a></td> 
+              <th scope="row">Suspect Response</a></th>
+              <td><a href="{% url 'answer' %}" class="addlink">Add</a></td>
           </tr>
       </table>
     </div>
     <div class="app-peace module">
       <table>
         <caption>
-          <a href="index.html" class="section" title="Case Report and News">Case Report and News</a>
+          <a href="index.html" class="section" title="Case Report and News">CASE REPORT</a>
         </caption>
-          <tr class="model-enforcer">
-              <th scope="row">Case Report</a></th>
-               <td><a href="index.html" class="addlink">View Case</a></td>
-                <td><a href="index.html" class="changelink">Feedback</a></td>  
-          </tr>
-          <tr class="model-suspectcase">
-              <th scope="row">Popping News</a></th>
-               <td><a href="index.html" class="addlink">View News</a></td>
-                <td><a href="index.html" class="changelink">Add News</a></td>
+          <tr class="model-enforcer"> 
+              <th scope="row">View Report</a></th>
+               <td><a href="{% url 'report' %}" class="addlink">View</a></td>
           </tr>
       </table>
     </div>
