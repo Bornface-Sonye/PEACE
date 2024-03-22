@@ -30,9 +30,9 @@
     border-radius: 4px;
     overflow: hidden;
     width: 28em;
-    min-width: 600px;
+    min-width: 800px;
     margin: 100px auto;
-    height: auto;
+    height: 100px auto;
     text-align: center;
 }
 

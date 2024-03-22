@@ -207,7 +207,7 @@ class FormsView(View):
                     'result': result,
                     
             }
-            return render(request, 'report.html', {'report_data': report_data})
+            return render(request, 'forms.html', {'report_data': report_data})
         
         
         

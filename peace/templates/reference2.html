@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+    <title>Suspect Forms | Peace Digital</title>
+    <link rel="stylesheet" href="{% static 'css/form.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dark_mode.css' %}">
+    <link rel="stylesheet" href="{% static 'css/form_styles.css' %}">
+    <script src="{% static 'js/theme.js' %}" defer></script>
+    <link rel="stylesheet" href="{% static 'css/forml.css' %}">
+    <link rel="stylesheet" href="{% static 'css/report.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dash.css' %}">
+    <script src="{% static 'js/main.js' %}" defer></script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="robots" content="NONE,NOARCHIVE">
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <h2>Dashboard</h2>
+      <ul>
+        <li><a href="#" onclick="showSection('today-classes')">Today's Classes</a></li>
+        <li><a href="#" onclick="showSection('registration-info')">Registration Information</a></li>
+        <li><a href="#" onclick="showSection('payments')">Payments</a></li>
+      </ul>
+    </div>
+    <div class="content">
+      <div id="today-classes" class="section">
+        <h2>Today's Classes</h2>
+        <!-- Add content here -->
+      </div>
+      <div id="registration-info" class="section">
+        <h2>Registration Information</h2>
+        <!-- Add content here -->
+      </div>
+      <div id="payments" class="section">
+        <h2>Payments</h2>
+        <!-- Add content here -->
+      </div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
