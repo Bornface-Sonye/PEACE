@@ -138,66 +138,50 @@ def generate_serial_number(unique_id, case_description):
     return serial_number
 
 
-class AddAnswerView(View):
-    template_name = 'answer_form.html'
+from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect
+from django.views import View
+from .forms import AnswerForm, InterrogatorReportForm
+from .models import SuspectResponse
+
+class FormsView(View):
+    template_name = 'forms.html'
     
     def get(self, request):
-        form = AnswerForm()
-        return render(request, self.template_name, {'form': form})
+        answer_form = AnswerForm()
+        report_form = InterrogatorReportForm()
+        return render(request, self.template_name, {'answer_form': answer_form, 'report_form': report_form})
 
     def post(self, request):
-        form = AnswerForm(request.POST)
-    
-        #Ensure that every entry is valid
-        # ['case_description', 'suspect_email', 'suspect_Residence_county', 
-        # 'incident_county', 'trace', 'know_complainant', 'involved_with_complainant', 'recidivist']
-        if form.is_valid():
-            case_description = form.cleaned_data['case_description']
-            unique_id = form.cleaned_data['unique_id']
-            trace = form.cleaned_data['trace']
-            know_complainant = form.cleaned_data['know_complainant']
-            involved_with_complainant = form.cleaned_data['involved_with_complainant']
-            recidivist = form.cleaned_data['recidivist']
+        answer_form = AnswerForm(request.POST)
+        report_form = InterrogatorReportForm(request.POST)
 
-            # Generate serial number
+        if answer_form.is_valid():
+            case_description = answer_form.cleaned_data['case_description']
+            unique_id = answer_form.cleaned_data['unique_id']
+            trace = answer_form.cleaned_data['trace']
+            know_complainant = answer_form.cleaned_data['know_complainant']
+            involved_with_complainant = answer_form.cleaned_data['involved_with_complainant']
+            recidivist = answer_form.cleaned_data['recidivist']
+            
             serial_number = generate_serial_number(unique_id, case_description)
-           
-            # Save the Interrogation Answers
-            suspectResponse = form.save(commit=False)
+            suspectResponse = answer_form.save(commit=False)
             suspectResponse.serial_number = serial_number
             suspectResponse.save()
-            
+
             return redirect('success', serial_number=serial_number)
-            
-        else:
-            return render(request, self.template_name, {'form': form})
-
-
-
-
-from django.shortcuts import render, get_object_or_404
-from django.views import View
-'''from .forms import InterrogatorReportForm
-from .models import SuspectResponse
-from .services import MachineLearningModel, SentimentAnalyser, CriminalPrediction
-'''
-class InterrogatorReportView(View):
-    template_name = 'report.html'
-
-    def get(self, request):
-        form = InterrogatorReportForm()
-        return render(request, self.template_name, {'form': form})
-
-    def post(self, request):
-        form = InterrogatorReportForm(request.POST)
-
-        if form.is_valid():
-            serial_number = form.cleaned_data['serial_number']
+        
+        if report_form.is_valid():
+            serial_number = report_form.cleaned_data['serial_number']
             try:
                 suspect_response = get_object_or_404(SuspectResponse, serial_number=serial_number)
                 suspect = suspect_response.unique_id
+                # Your processing for generating report data
+                # This part is incomplete as it involves external services or algorithms
+                
             except SuspectResponse.DoesNotExist:
                 return render(request, 'interrogator_error.html', {'error_message': f'Suspect Report with serial number "{serial_number}" not found.'})
+            
             
             mlm = MachineLearningModel()
             accuracy = mlm.accuracy()
@@ -215,21 +199,20 @@ class InterrogatorReportView(View):
             criminal.data_retrieval(name, age, recidivist, trace, obedient_score, consistency_score, gender)
             criminal.data_preparation()
             result = criminal.result()
-
+            
             report_data = {
-                'accuracy': accuracy,
-                'name': name,
-                'case_description': suspect_response.case_description,
-                'result': result,
-                
+                    'accuracy': accuracy,
+                    'name': name,
+                    'case_description': suspect_response.case_description,
+                    'result': result,
+                    
             }
             return render(request, 'report.html', {'report_data': report_data})
-        else:
-            return render(request, self.template_name, {'form': form})
-
-
-
-    
+        
+        
+        
+        return render(request, self.template_name, {'answer_form': answer_form, 'report_form': report_form})
+   
 
 
 
