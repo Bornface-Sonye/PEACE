@@ -20,7 +20,7 @@ function menuBtnChange() {
     }
 }
 
-menuBtnChange();
+/*menuBtnChange();
 
 
 // script.js
@@ -35,4 +35,4 @@ function showSection(sectionId) {
     var selectedSection = document.getElementById(sectionId);
     selectedSection.classList.add('active');
   }
-  
+  */

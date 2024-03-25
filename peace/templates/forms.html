@@ -12,15 +12,27 @@
     <link rel="stylesheet" href="{% static 'css/dash.css' %}">
     <script src="{% static 'js/main.js' %}" defer></script>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link= "stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap//3.4.1/css/bootstrap.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/query/3.6.4/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap//3.4.1/css/bootstrap.min.css">
+    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>-->
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <meta name="robots" content="NONE,NOARCHIVE">
     <style>
         .hidden {
             display: none;
         }
+            .hidden {
+                display: none;
+            }
+            
+            /* Adjusted CSS for progress bar */
+            #progress-bar-container {
+                margin-top: 20px;
+            }
+            
+            #progress-bar {
+                width: 100%;
+            }        
     </style>
 </head>
 <body class="login">
@@ -36,8 +48,6 @@
                 <span class="tooltip">Search</span>
             </li>
             <li>
-               <!-- <a href="{% url 'dashboard' %}" class="return-button button">Return to Home</a>-->
-            
                 <a href="#">
                     <i class='bx bx-grid-alt'></i>
                     <span class="links_name">Dashboard</span>
@@ -45,14 +55,14 @@
                 <span class="tooltip">Dashboard</span>
             </li>
             <li>
-                <a href="{% url 'signup' %}">
+                <a href="#" onclick="showForm('add-answer')">
                     <i class='bx bx-user'></i>
                     <span class="links_name">Responses</span>
                 </a>
                 <span class="tooltip">Responses</span>
             </li>
             <li>
-                <a href="">
+                <a href="#" onclick="showForm('report-form')">
                     <i class='bx bx-chat'></i>
                     <span class="links_name">Report</span>
                 </a>
@@ -60,7 +70,7 @@
             </li>
             <li>
                 <a href="#">
-                    <i class='bx bx-cart-alt'></i>
+                    <i class='bx bx-log-out' id="log_out"></i>
                     <span class="links_name">Log out</span>
                 </a>
                 <span class="tooltip">Log out</span>
@@ -73,47 +83,45 @@
                         <div class="job">Web Application</div>
                     </div>
                 </div>
-                <i class='bx bx-log-out' id="log_out"></i>
             </li>
         </ul>
     </div>
 
     <!-- Container -->
     <section class="home-section">
-    <div id="container">
         <!-- Header -->
-        <div id="header">
-            <div id="branding">
-                <h1 id="site-name"><a href="{% url 'forms' %}">PEACE 2017 REFORMED</a></h1><br>
-                <button class="theme-toggle">
-                    <div class="visually-hidden theme-label-when-auto">Toggle theme (current theme: auto)</div>
-                    <div class="visually-hidden theme-label-when-light">Toggle theme (current theme: light)</div>
-                    <div class="visually-hidden theme-label-when-dark">Toggle theme (current theme: dark)</div>
-                    <svg aria-hidden="true" class="theme-icon-when-auto">
-                        <use xlink:href="#icon-auto" />
-                    </svg>
-                    <svg aria-hidden="true" class="theme-icon-when-dark">
-                        <use xlink:href="#icon-moon" />
-                    </svg>
-                    <svg aria-hidden="true" class="theme-icon-when-light">
-                        <use xlink:href="#icon-sun" />
-                    </svg>
-                </button>
-            </div>  
-        </div>
-        <!-- END Header -->
-        <div class="main" id="main">
-            <div id="content-start" class="content" tabindex="-1">
-                <!-- Content -->
-                <div id="content" class="colM">      
-                    <div id="content-main" >
+        <div id="container">
+            <div id="header">
+                <div id="branding">
+                    <h1 id="site-name"><a href="{% url 'forms' %}">PEACE 2017 REFORMED</a></h1><br>
+                    <button class="theme-toggle">
+                        <div class="visually-hidden theme-label-when-auto">Toggle theme (current theme: auto)</div>
+                        <div class="visually-hidden theme-label-when-light">Toggle theme (current theme: light)</div>
+                        <div class="visually-hidden theme-label-when-dark">Toggle theme (current theme: dark)</div>
+                        <svg aria-hidden="true" class="theme-icon-when-auto">
+                            <use xlink:href="#icon-auto" />
+                        </svg>
+                        <svg aria-hidden="true" class="theme-icon-when-dark">
+                            <use xlink:href="#icon-moon" />
+                        </svg>
+                        <svg aria-hidden="true" class="theme-icon-when-light">
+                            <use xlink:href="#icon-sun" />
+                        </svg>
+                    </button>
+                </div>  
+            </div>
+            <!-- END Header -->
+            <div class="main" id="main">
+                <div id="content-start" class="content" tabindex="-1">
+                    <!-- Content -->
+                    <div id="content" class="colM">
                         <!-- Add Answer Form Section -->
-                        <section id="add-answer" >
+                        <section id="add-answer" class="form-section hidden">
                             <h1 id="site-name"><a href="{% url 'forms' %}">Suspect Questionnaire</a></h1><br>
                             <form action="{% url 'forms' %}" method="post" id="answer-form">   
                                 {% csrf_token %}
                                 <!-- Suspect Details Section -->
-                                <div class="form-section">
+                               <div >
                                     <h2><big>Suspect Personal Information:</big></h2><br><br>
                                     <div class="form-field">                   
                                         <label for="{{ answer_form.case_description.id_for_label }}" class="required">Case Description:</label><br><br>
@@ -126,11 +134,11 @@
                                         {{ answer_form.unique_id }}
                                         {{ answer_form.unique_id.errors }}
                                     </div><br>  
-                                </div>
+                               </div>
                                 <br><br><br>
 
                                 <!-- Answer Information Section -->
-                                <div class="form-section">
+                                <div>
                                     <h2><big>Case Related Information:</big></h2><br>
                                     <div class="form-field">
                                         <label for="{{ answer_form.trace.id_for_label }}" class="required">{{ answer_form.trace.label }}</label><br><br>
@@ -154,16 +162,59 @@
                                     </div>
                                 </div>
                                 <br><br><br>
+
+                                <!-- Answer Information Section -->
+                                <div>
+                                    <h2><big>Suspect Interrogation Phase 1:</big></h2><br>
+                                    <div class="form-field">
+                                        <label for="{{ answer_form.question1.id_for_label }}" class="required">{{ answer_form.question1.label }}</label><br><br>
+                                        {{ answer_form.question1 }}
+                                        {{ answer_form.question1.errors }}
+                                    </div><br>
+                                    <div class="form-field">
+                                        <label for="{{answer_form.question2.id_for_label }}" class="required">{{ answer_form.question2.label }}</label><br><br>
+                                        {{ answer_form.question2 }}
+                                        {{answer_form.question2.errors }}
+                                    </div><br>
+                                    <div class="form-field">
+                                        <label for="{{ answer_form.question3.id_for_label }}" class="required">{{ answer_form.question3.label }}</label><br><br>
+                                        {{ answer_form.question3 }}
+                                        {{ answer_form.question3.errors }}
+                                    </div><br>
+                                </div>
+                                <br><br><br>
+                                
+                                <!-- Answer Information Section -->
+                                <div>
+                                    <h2><big>Suspect Interrogation Phase 2:</big></h2><br>
+                                    <div class="form-field">
+                                        <label for="{{ answer_form.query1.id_for_label }}" class="required">{{ answer_form.query1.label }}</label><br><br>
+                                        {{ answer_form.query1 }}
+                                        {{ answer_form.query1.errors }}
+                                    </div><br>
+                                    <div class="form-field">
+                                        <label for="{{answer_form.query2.id_for_label }}" class="required">{{ answer_form.query2.label }}</label><br><br>
+                                        {{ answer_form.query2 }}
+                                        {{answer_form.query2.errors }}
+                                    </div><br>
+                                    <div class="form-field">
+                                        <label for="{{ answer_form.query3.id_for_label }}" class="required">{{ answer_form.query3.label }}</label><br><br>
+                                        {{ answer_form.query3 }}
+                                        {{ answer_form.query3.errors }}
+                                    </div><br>
+                                </div>
+                                <br><br><br>
+
+
                                 <div class="submit-row">
                                     <input type="submit" value="Save">
-                                    <input type="submit"  value="Clear">
                                 </div>
                                 <br>
                             </form>
                         </section>
 
                         <!-- Report Form Section -->
-                        <section id="report-form"  > 
+                        <section id="report-form" class="form-section hidden"> 
                             <h1 id="site-name"><a href="{% url 'forms' %}">Suspect Report</a></h1><br>
                             <form method="post" action="{% url 'forms' %}" class="report-form" id="report-form">
                                 {% csrf_token %}
@@ -171,73 +222,33 @@
                                 <input type="text" name="serial_number" required>
                                 <div class="button-container">
                                     <button type="submit" class="generate-button button">Generate Report</button>
-                                    <a href="{% url 'dashboard' %}" class="return-button button">Return to Home</a>
                                 </div>
-                            </form>
-
-
-                            <!-- Display progress report details here -->
-                <div id="report-details" style="display: {% if report_data %}block{% else %}none{% endif %};">
-                    <button class="print-button button" onclick="printReport()">Print</button>
-                     <h3>Report Details :</h3>
-                       <table>
-                      <caption>Suspect Report</caption>
-                       <tr>
-                       <th>Details</th>
-                       <th>Values</th>
-                       </tr>
-                       <tr>
-                       <td>Model Accuracy:</td>
-                       <td>{{ report_data.accuracy }}</td>
-                       </tr>
-                       <tr>
-                       <td>Suspect Identification:</td>
-                       <td>{{ report_data.name }}</td>
-                       </tr>
-                       <tr>
-                       <td>Case Description:</td>
-                      <td>{{ report_data.case_description }}</td>
-                      </tr>
-                      <tr>
-                      <td>Predicted Criminal:</td>
-                      <td>{{ report_data.result }}</td>
-                      </tr>
-                     </table>
-                     <!-- Print Report Button -->
-        
+                            </form>         
+                        </section>
+                    </div>
+                    <br class="clear">
                 </div>
-
-    <!-- Keys at the bottom of the table 
-    <div class="keys">
-        <p><strong>Accuracy:</strong> Explanation of accuracy measurement.</p>
-        <p><strong>Suspect Identification:</strong> Explanation of suspect identification.</p>
-        <p><strong>Case Description:</strong> Explanation of case description.</p>
-        <p><strong>Result:</strong> Explanation of result.</p>
-    </div>
--->
+                <!-- END Content -->
+                <div id="footer"></div>
+            </div>
+        </div>
+        <!-- END Container -->
+    </section>
+    <!-- JavaScript -->
     <script>
-        function printReport() {
-            var reportDetails = document.getElementById('report-details').innerHTML;
-            var printWindow = window.open('', '_blank');
-            printWindow.document.write('<html><head><title>Print Report</title></head><body>');
-            printWindow.document.write('<h2>Suspect Report</h2>');
-            printWindow.document.write(reportDetails);
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.print();
+        function hideAllForms() {
+            document.querySelectorAll('.form-section').forEach(function(formSection) {
+                formSection.classList.add('hidden');
+            });
         }
+
+        function showForm(formId) {
+            hideAllForms();
+            document.getElementById(formId).classList.remove('hidden');
+        }
+        
     </script>
- </section>
- </div>
- <br class="clear">
-</div>
-<!-- END Content -->
-<div id="footer"></div>
-</div>
-</div>
-</div>
-    
-<!-- END Container -->
+    <!-- END JavaScript -->
     <!-- SVGs -->
     <svg xmlns="http://www.w3.org/2000/svg" class="base-svgs">
         <symbol viewBox="0 0 24 24" width="1rem" height="1rem" id="icon-auto"><path d="M0 0h24v24H0z" fill="currentColor"/><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2V4a8 8 0 1 0 0 16z"/></symbol>
@@ -245,6 +256,5 @@
         <symbol viewBox="0 0 24 24" width="1rem" height="1rem" id="icon-sun"><path d="M0 0h24v24H0z" fill="currentColor"/><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></symbol>
     </svg>
     <!-- END SVGs -->
-</section>
 </body>
 </html>

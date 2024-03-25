@@ -102,7 +102,7 @@ class SuspectCase(models.Model):
         return str(self.unique_id)
     
 
-# models.py
+
 
 class SuspectResponse(models.Model):
     testification_id = models.AutoField(primary_key=True, help_text="Enter a valid testification id")
@@ -114,7 +114,12 @@ class SuspectResponse(models.Model):
     know_complainant = models.CharField(max_length=3, choices=[('Yes', 'Yes'), ('No', 'No')], help_text="Know complainant?")
     involved_with_complainant = models.CharField(max_length=3, choices=[('Yes', 'Yes'), ('No', 'No')], help_text="Involved with complainant?")
     recidivist = models.CharField(max_length=3, choices=[('Yes', 'Yes'), ('No', 'No')], help_text="Involved in similar case?")
-
+    question1 = models.CharField(max_length=250, default="", help_text="Can you describe what happened on the incident day providing as many details as possible")
+    question2 = models.CharField(max_length=250, default="", help_text="Can you think of any reason why someone would lie about this incident ? If yes, explain.")
+    question3 = models.CharField(max_length=250, default="", help_text="Are you aware of any other complaints made by the accuser ? If yes, State.")
+    query1 = models.CharField(max_length=250, default="", help_text="Provide detailed description of the incident day's events.")
+    query2 = models.CharField(max_length=250, default="", help_text="Any motive for dishonesty about the incident? Please elaborate if applicable.")
+    query3 = models.CharField(max_length=250, default="", help_text="Have you heard of any additional complaints filed by the accuser? If so, specify.")
     
     
     def __str__(self):

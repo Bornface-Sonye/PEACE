@@ -1,21 +1,25 @@
 import hashlib
 import uuid
-#from .utils import GeneratePDFReportView
-from tabulate import tabulate
-from django.shortcuts import get_object_or_404
 from django.views import View
 from .forms import AnswerForm,InterrogatorReportForm, DepSignUpForm, DepLoginForm
-from django.shortcuts import render, redirect,get_object_or_404
+from .forms import SignUpForm, LoginForm 
 from .models import Suspect, Case, SuspectResponse, Department, BadgeNumber
 from .models import Enforcer, CaseCollection, EnforcerCase, SuspectCase, County
+
+
+
 from django.http import HttpResponse
+from django.shortcuts import render, redirect,get_object_or_404
+from tabulate import tabulate
 from django.conf import settings
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer
 from reportlab.lib.units import inch
 from io import BytesIO
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Spacer, Table, TableStyle, Paragraph
+
+
 
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -28,13 +32,10 @@ import os
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 import spacy as sp
-from django.conf import settings
-from django.shortcuts import render, redirect
-from .forms import SignUpForm
-from .models import Enforcer
 
-from django.shortcuts import render, redirect
-from .forms import SignUpForm, DepSignUpForm, DepLoginForm
+
+
+
 
 def signup(request):
     if request.method == 'POST':
@@ -62,11 +63,6 @@ def depsignup(request):
     return render(request, 'depsignup.html', {'form': form})
 
 
-from django.shortcuts import render, redirect
-from django.views import View
-from .forms import LoginForm
-from .models import Enforcer
-
 class LoginView(View):
     def get(self, request):
         form = LoginForm()
@@ -80,7 +76,8 @@ class LoginView(View):
             enforcer = Enforcer.objects.filter(badge_no=badge_no).first()
             if enforcer and enforcer.check_password(password):
                 # Authentication successful
-                return redirect('dashboard')  # Redirect to the dashboard upon successful login
+                #request.session['badge_no'] = badge_no
+                return redirect('forms')  # Redirect to the dashboard upon successful login
             else:
                 # Authentication failed
                 form.add_error(None, 'Invalid badge number or password')
@@ -99,14 +96,14 @@ class DepLoginView(View):
             department = Department.objects.filter(dep_no=dep_no).first()
             if department and department.check_password(password):
                 # Authentication successful
-                return redirect('index')  # Redirect to the dashboard upon successful login
+                return redirect('index')  # Redirect to the home page upon successful login
             else:
                 # Authentication failed
                 form.add_error(None, 'Invalid Department number or password')
         return render(request, 'deplogin.html', {'form': form})
 
 
-from .forms import LoginForm
+
 
 class ErrorPageView(View):
     def get(self,request):
@@ -137,13 +134,6 @@ def generate_serial_number(unique_id, case_description):
     serial_number = hashlib.md5(combined_string.encode()).hexdigest()
     return serial_number
 
-
-from django.shortcuts import render, get_object_or_404
-from django.shortcuts import render, redirect
-from django.views import View
-from .forms import AnswerForm, InterrogatorReportForm
-from .models import SuspectResponse
-
 class FormsView(View):
     template_name = 'forms.html'
     
@@ -163,6 +153,19 @@ class FormsView(View):
             know_complainant = answer_form.cleaned_data['know_complainant']
             involved_with_complainant = answer_form.cleaned_data['involved_with_complainant']
             recidivist = answer_form.cleaned_data['recidivist']
+            question1 = answer_form.cleaned_data['question1']
+            question2 = answer_form.cleaned_data['question2']
+            question3 = answer_form.cleaned_data['question3']
+            query1 = answer_form.cleaned_data['query1']
+            query2 = answer_form.cleaned_data['query2']
+            query3 = answer_form.cleaned_data['query3']
+            
+            
+            # Check for existing testification
+            if SuspectResponse.objects.filter(case_description=case_description, unique_id=unique_id).exists():
+                form.add_error(None, "Intorragation Information for This Suspect ID and Case Description already submitted, sorry.")
+                return render(request, self.template_name, {'answer_form': form})
+
             
             serial_number = generate_serial_number(unique_id, case_description)
             suspectResponse = answer_form.save(commit=False)
@@ -171,18 +174,20 @@ class FormsView(View):
 
             return redirect('success', serial_number=serial_number)
         
-        if report_form.is_valid():
+        elif report_form.is_valid():
             serial_number = report_form.cleaned_data['serial_number']
             try:
                 suspect_response = get_object_or_404(SuspectResponse, serial_number=serial_number)
                 suspect = suspect_response.unique_id
-                # Your processing for generating report data
-                # This part is incomplete as it involves external services or algorithms
-                
+                if not SuspectResponse.objects.filter(serial_number=serial_number).exists():
+                    form.add_error(None, "Case Information for the Provided Serial Number does not exist, sorry.")
+                    return render(request, self.template_name, {'report_form': form})                
             except SuspectResponse.DoesNotExist:
                 return render(request, 'interrogator_error.html', {'error_message': f'Suspect Report with serial number "{serial_number}" not found.'})
-            
-            
+        
+        
+        
+            # My processing for generating report data
             mlm = MachineLearningModel()
             accuracy = mlm.accuracy()
             sent1 = SentimentAnalyser()
@@ -193,27 +198,44 @@ class FormsView(View):
             recidivist = suspect_response.recidivist
             firstResponse = suspect_response.trace
             secondResponse = suspect_response.know_complainant
-            consistency_score = sent1.calculate_consistency_score(firstResponse, secondResponse)
-            trace = sent1.is_obedient(firstResponse, name, age, gender)
-            obedient_score = sent1.is_obedient(firstResponse, name, age, gender)
+            question1 = suspect_response.question1
+            question2 = suspect_response.question2
+            question3 = suspect_response.question3
+            query1 = suspect_response.query1
+            query2 = suspect_response.query2
+            query3 = suspect_response.query3
+            consistency_score = sent1.calculate_consistency_score(question1, query1)
+            trace = suspect_response.trace
+            honesty_score = sent1.is_honest(question2)
             criminal.data_retrieval(name, age, recidivist, trace, obedient_score, consistency_score, gender)
             criminal.data_preparation()
             result = criminal.result()
             
+            
             report_data = {
-                    'accuracy': accuracy,
-                    'name': name,
-                    'case_description': suspect_response.case_description,
-                    'result': result,
-                    
+                'name': name,
+                'age':age,
+                'gender':gender,
+                'recidivist':recidivist,
+                'honesty_score':honesty_score,
+                'consistency_score':consistency_score,
+                'case_description': suspect_response.case_description,
+                'result': result,
+                'accuracy': accuracy,
             }
-            return render(request, 'forms.html', {'report_data': report_data})
-        
-        
-        
+            
+            
+            # Generate PDF
+            pdf_bytes = generate_pdf(report_data)
+               
+            # Return the PDF file as a response
+            response = HttpResponse(pdf_bytes, content_type='interrogator/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{name}_report.pdf"'
+            return response
+            
+            
+            # If neither form is valid or processed, return the template with both forms       
         return render(request, self.template_name, {'answer_form': answer_form, 'report_form': report_form})
-   
-
 
 
 
@@ -224,36 +246,26 @@ class SentimentAnalyser:
         # Initialize spaCy NLP model
         self.nlp = sp.load("en_core_web_sm")
     
-    def is_obedient(self, answer_1, name, age, gender):
-        # Sentiment analysis for obedience
-        # You can define your own rules for determining obedience based on sentiment scores
-        sentiment_scores = self.sid.polarity_scores(answer_1)
-        obedient_score = sentiment_scores['compound']
-        if obedient_score >= 0:
+    def is_honest(self, text_1):
+        # Sentiment analysis for honesty
+        # You can define your own rules for determining honesty based on sentiment scores
+        sentiment_scores = self.sid.polarity_scores(text_1)
+        honesty_score = sentiment_scores['compound']
+        if honesty_score >= 0:
             return 'Yes' # Obedient
         else:
             return 'No' # Not obedient
-        
-    def calculate_emotion_score(self, answer_1):
-        # Calculate emotion score
-        sentiment_scores = self.sid.polarity_scores(answer_1)
-        emotion_score = sentiment_scores['compound']
-        return emotion_score
 
-    def calculate_consistency_score(self, answer_1, answer_2):
+    def calculate_consistency_score(self, text_1, text_2):
         # Calculate consistency score based on two sets of text
-        doc1 = self.nlp(answer_1)
-        doc2 = self.nlp(answer_2)
+        doc1 = self.nlp(text_1)
+        doc2 = self.nlp(text_2)
         # You can define your own logic to calculate consistency score
         # For example, you can measure the similarity between two text samples
         similarity = doc1.similarity(doc2)
-        consistency_score = (similarity + 1) / 2 # Normalize to [0, 1]
+        con_score = (similarity + 1) / 2 # Normalize to [0, 1]
+        consistency_score = con_score * 100
         return consistency_score
-
-    def calculate_confidence_score(self, emotion_score, consistency_score):
-        # Calculate confidence score as an average of emotion and consistency scores
-        confidence_score = (emotion_score + consistency_score) / 2
-        return confidence_score
 
 class MachineLearningModel:
     def __init__(self):
@@ -268,12 +280,12 @@ class MachineLearningModel:
         self.actual_labels = None
         self.file_path = os.path.join(settings.BASE_DIR, 'peace', 'peace', 'crime.csv')
         self.df = pd.read_csv(self.file_path)
-        self.feature_names = ['Age','Recidivist','Trace','Obedient','ConsistencyScore','Gender']
+        self.feature_names = ['Age','Recidivist','Trace','Honest','ConsistencyScore','Gender']
         self.training_features = self.df[self.feature_names]
         self.outcome_name = ['Criminal']
         self.outcome_labels = self.df[self.outcome_name]
         self.numeric_feature_names = ['Age','ConsistencyScore']
-        self.categorical_feature_names = ['Recidivist','Trace','Obedient','Gender']
+        self.categorical_feature_names = ['Recidivist','Trace','Honest','Gender']
         ss = StandardScaler()
         ss.fit(self.training_features[self.numeric_feature_names])
         self.training_features[self.numeric_feature_names] = ss.transform(self.training_features[self.numeric_feature_names])
@@ -314,24 +326,24 @@ class CriminalPrediction:
         self.predictions = None
         self.file_path = os.path.join(settings.BASE_DIR, 'peace', 'peace', 'crime.csv')
         self.df = pd.read_csv(self.file_path)
-        self.feature_names = ['Age','Recidivist','Trace','Obedient','ConsistencyScore','Gender']
+        self.feature_names = ['Age','Recidivist','Trace','Honest','ConsistencyScore','Gender']
         self.training_features = self.df[self.feature_names]
         self.outcome_name = ['Criminal']
         self.outcome_labels =self.df[self.outcome_name]
         self.numeric_feature_names = ['Age','ConsistencyScore']
-        self.categorical_feature_names = ['Recidivist', 'Trace','Obedient','Gender']
+        self.categorical_feature_names = ['Recidivist', 'Trace','Honest','Gender']
         self.ss = StandardScaler()
         self.ss.fit(self.training_features[self.numeric_feature_names])
         self.training_features[self.numeric_feature_names] = self.ss.transform(self.training_features[self.numeric_feature_names])
         self.training_features = pd.get_dummies(self.training_features,columns=self.categorical_feature_names)
         
     
-    def data_retrieval(self,name,age,recidivist,trace,obedient,consistency_score,gender):
+    def data_retrieval(self,name,age,recidivist,trace,honest,consistency_score,gender):
         self.new_data = pd.DataFrame([{'Name': name,
                         'Age': age,
                         'Recidivist': recidivist,
                         'Trace': trace,
-                        'Obedient': obedient,
+                        'Honest': honest,
                         'ConsistencyScore': consistency_score,
                         'Gender': gender
                         }])
@@ -339,9 +351,9 @@ class CriminalPrediction:
     def data_preparation(self):
         self.prediction = self.new_data.copy()
         self.numeric_feature = ['Age','ConsistencyScore']
-        self.categorical_feature = ['Recidivist_Yes','Recidivist_No','Trace_Yes','Trace_No','Obedient_Yes','Obedient_No','Gender_Male','Gender_Female']
+        self.categorical_feature = ['Recidivist_Yes','Recidivist_No','Trace_Yes','Trace_No','Honest_Yes','Honest_No','Gender_Male','Gender_Female']
         self.prediction[self.numeric_feature] = self.scaler.transform(self.prediction[self.numeric_feature])
-        self.prediction= pd.get_dummies(self.prediction,columns=['Recidivist', 'Trace','Obedient','Gender'])
+        self.prediction= pd.get_dummies(self.prediction,columns=['Recidivist', 'Trace','Honest','Gender'])
         for feature in self.categorical_feature:
             if feature not in self.prediction.columns:
                 self.prediction[feature] = 0 #Add missing categorical feature columns with 0 columns
@@ -350,24 +362,13 @@ class CriminalPrediction:
         self.new_data['Criminal'] = self.predictions
 
     def result(self):
-        result_str = "\t\t"
+        result_str = ""
         for index, row in self.new_data.iterrows():
             result_str += f"{'Yes' if row['Criminal'] == 1 else 'No'}"
         return result_str
        
 
-        
-    
 
-    
-    
-
-    
-
-
-
-
-'''
 def generate_pdf(report_data):
     buffer = BytesIO()
     pdf_canvas = SimpleDocTemplate(buffer, pagesize=landscape(letter))
@@ -381,19 +382,60 @@ def generate_pdf(report_data):
     style_normal.fontSize = 12
     style_heading.fontSize = 14
 
-    # Define table data
-    table_data = [
-        ["Suspect Report"],
-        ["Suspect Email Address:", report_data['suspect_details']['suspect_email']],
-        ["Case Description:", report_data['case_description']],
-        ["Accuracy:", report_data['accuracy']],
-        ["Result:", report_data['result']],
+    # Define additional information to include at the top
+    additional_info = [
+        "PEACE 2017 REFORMED, THE PEACE DIGITAL",
+        " ",
+        "P.O. BOX. 197-40400 SARE-AWENDO",
+        " ",
+        "Email: bornfacesonye@gmail.com",
+        
+        "TEL: +254-798073204",
+        " ",
+        " ",
+        "\n",
+        " ",
+        "DEPARTMENT:KAMITI",
+        " ",
+        " ",
+        " ",
+        " ",
+        "CASE YEAR: 2024",
+        " \n\n",
     ]
 
-    # Create a table
-    table = Table(table_data)
+    # Create a paragraph for additional information
+    additional_info_paragraphs = [Paragraph(info, style_normal) for info in additional_info]
 
-    # Set table style
+    # Calculate the height of the additional information
+    additional_info_height = sum(paragraph.wrapOn(pdf_canvas, pdf_canvas.width, pdf_canvas.height)[1] for paragraph in additional_info_paragraphs)
+
+    # Define table data
+    table_data = [
+        ["Case Information"],
+        ["Case Description:", report_data['case_description']],
+        ["Suspect Unique Identification:", report_data['name']],
+        ["Suspect Age:", report_data['age']],
+        ["Suspect Gender:", report_data['gender']],
+        ["Have The Suspect been in Similar Case Before:", report_data['recidivist']],
+        ["Is The Suspect Honest:", report_data['honesty_score']],
+        ["Suspect Consistency Score:", report_data['consistency_score']],
+        ["Predicted Criminal:", report_data['result']],
+        ["Accuracy of the Model Used:", report_data['accuracy']],
+        
+    ]
+
+    # Calculate the required height for the table
+    table_height = len(table_data) * style_normal.fontSize
+
+    # Adjust the page height based on the content
+    pdf_canvas.pagesize = landscape(letter)
+    pdf_canvas.height = max(additional_info_height, table_height) + inch  # Add some extra space between content and table
+
+    # Create a table for main data
+    main_table = Table(table_data, colWidths=[6*inch, 4*inch])  # Adjusting column widths
+
+    # Set table style for main data
     style = TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                         ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
@@ -409,17 +451,14 @@ def generate_pdf(report_data):
                         ('SPAN', (0, 0), (1, 0)),  # Merge cells for the heading
                         ])
 
-    table.setStyle(style)
+    main_table.setStyle(style)
 
     # Add page border
     frame_styling = TableStyle([('BOX', (0, 0), (-1, -1), 2, colors.black)])
-    table.setStyle(frame_styling)
+    main_table.setStyle(frame_styling)
 
-    # Add table to the PDF
-    elements = [table]
-
-    # Add space after table
-    elements.append(Spacer(1, 0.25 * inch))
+    # Add tables to the PDF
+    elements = additional_info_paragraphs + [Spacer(1, 0.25 * inch), main_table]
 
     # Build PDF
     pdf_canvas.build(elements)
@@ -429,4 +468,3 @@ def generate_pdf(report_data):
     buffer.close()
 
     return pdf_bytes
-'''
