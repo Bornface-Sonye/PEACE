@@ -1,57 +1,42 @@
-# Crime Detection System Readme
+# Peace Digital Readme
 
-## Current System
-The current system operates as follows:
-- The enforcer manually collects data from witnesses and suspects.
-- Natural intelligence is used to identify potential criminals.
+## Project Overview
 
-### Challenges of Current System
-- Slow and error-prone due to manual data collection.
-- Lack of technology integration limits analysis and suspect identification accuracy.
+**Peace Digital** is an innovative investigative technology designed to facilitate a more collaborative and empathetic approach to interrogation, aligning with the principles of the Peace Model.
 
-## Proposed Idea
+### Origin
+- **Methodology:** The Peace Model
+- **Year:** 2017
+- **Founder:** Unknown
 
-### Overview
-We propose a crime detection system focusing on cyber security cases. This system involves three actors: the law enforcer, suspect, and witness.
+### Problem Addressed
+The project addresses the limitations of traditional interrogation techniques, such as the Reid Technique, which has been criticized for its potential to induce false confessions through psychological manipulation.
 
-### System Architecture Diagram
+## How It Works
 
-![System Architecture Diagram](system_architecture_diagram.png)
+### Steps
 
-### System Features
-- **Landing Page**: Includes authentication and role selection.
-- **Enforcer Dashboard**: Allows adding/viewing case details and statements.
-- **Suspect Dashboard**: Enables testimony and case report viewing.
-- **Witness Dashboard**: Facilitates testimony.
+1. **DepLogin**
+   - Enforcers log in as department members through the provided link.
+   - [DepLogin URL](http://127.0.0.1:8000/peace/deplogin/)
 
-### User Authentication
-- Users receive an authorization code via email for access.
-- Role selection determines dashboard access.
+2. **Homepage**
+   - Enforcers can choose to log in or sign up from the homepage.
 
-### Case Management
-- Enforcer adds case details: ID, description, suspects, witnesses, and status.
-- Suspects and witnesses are added based on enforcer input.
-- Enforcer writes statement including incident details.
-- Enforcer can view case reports.
+3. **Sign Up**
+   - Enforcers enter their badge number, password, and confirm password to create an account.
 
-### Sample Enforcer Dashboard Interface
+4. **Log In**
+   - Enforcers log in with their badge number and password.
 
-![Enforcer Dashboard Interface](enforcer_dashboard.png)
+5. **Forms Page/Enforcer Dashboard**
+   - Enforcers navigate through the dashboard to access various functionalities.
 
-### Testimony
-- Suspects and witnesses provide testimony through system-generated questions.
-- Testimonies are stored and analyzed for consistency.
+6. **Responses**
+   - Enforcers fill out suspect questionnaire forms, generating unique serial numbers upon successful submission.
 
-### Data Analysis
-- Sentiment analysis calculates emotion, confidence, and consistency scores.
-- Machine learning model predicts potential criminals based on suspect data and testimony.
-
-### Use Case Model
-- User accesses landing page and authenticates.
-- Role determines dashboard access.
-- Enforcer manages cases and statements.
-- Suspects and witnesses testify.
-- Data analysis and prediction inform case reports.
+7. **Report**
+   - Enforcers download case reports by entering the generated serial numbers into the provided form.
 
 ## Conclusion
-The proposed crime detection system integrates technology to streamline case management and improve suspect identification accuracy.
+The Peace Digital project offers a modernized approach to interrogation, promoting collaboration and empathy in law enforcement procedures.

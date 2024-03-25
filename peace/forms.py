@@ -136,3 +136,14 @@ class InterrogatorReportForm(forms.Form):
         help_text = "Enter the 50-alphanumeric serial number",
         widget=forms.TextInput(attrs={'class': 'blue-input-box'})
     )
+    
+    
+    
+    
+# forms.py
+
+from django import forms
+from .models import CustomUser
+
+class PasswordResetForm(forms.Form):
+    email = forms.EmailField(label='Email')

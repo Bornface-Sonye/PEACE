@@ -126,6 +126,81 @@ class InterrogatorDashboardView(View):
 class DashboardView(View):
     def get(self,request):
         return render(request, 'dashboards.html')
+    
+    
+# views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth import logout as django_logout
+
+def logout(request):
+    if request.method == 'POST':
+        django_logout(request)
+        return redirect('home')  # Redirect to home page after logout
+    return render(request, 'logout.html')
+
+
+
+
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils.crypto import get_random_string
+from .forms import PasswordResetForm
+from .models import PasswordResetToken
+
+def reset_password(request):
+    if request.method == 'POST':
+        form = PasswordResetForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            user = User.objects.filter(email=email).first()
+            if user:
+                # Generate a unique token
+                token = get_random_string(length=32)
+                # Save the token to the database
+                PasswordResetToken.objects.create(user=user, token=token)
+                # Send password reset email
+                reset_link = request.build_absolute_uri('/') + f'reset-password/{token}'
+                send_mail(
+                    'Reset Your Password',
+                    f'Click the link to reset your password: {reset_link}',
+                    settings.EMAIL_HOST_USER,
+                    [email],
+                    fail_silently=False,
+                )
+            else:
+                # Display error message for non-existing email
+                error_message = "Email does not exist in our records."
+                return render(request, 'reset_password.html', {'form': form, 'error_message': error_message})
+            # Redirect to a success page or show a message
+            return redirect('password_reset_done')
+    else:
+        form = PasswordResetForm()
+    return render(request, 'reset_password.html', {'form': form})
+
+def reset_password_confirm(request, token):
+    # Check if the token exists in the database
+    password_reset_token = PasswordResetToken.objects.filter(token=token).first()
+    if password_reset_token:
+        if request.method == 'POST':
+            # Update the user's password
+            user = password_reset_token.user
+            new_password = request.POST.get('new_password')
+            user.set_password(new_password)
+            user.save()
+            # Delete the used token
+            password_reset_token.delete()
+            # Redirect to password reset success page or login page
+            return redirect('password_reset_complete')
+        else:
+            # Render a form for the user to enter new password
+            return render(request, 'reset_password_confirm.html', {'token': token})
+    else:
+        # Token is invalid or expired, handle appropriately
+        return render(request, 'reset_password_token_invalid.html')
+
+
 
 def generate_serial_number(unique_id, case_description):
     data_string = f"{unique_id}-{case_description}"
@@ -211,6 +286,16 @@ class FormsView(View):
             criminal.data_preparation()
             result = criminal.result()
             
+            sentiment_analyzer = SentimentAnalyzer()
+            text_groups = {
+                'group1': ("Text1-1", "Text1-2"),
+                'group2': ("Text2-1", "Text2-2"),
+                'group3': ("Text3-1", "Text3-2")
+            }
+            
+            consistency_score = sentiment_analyzer.calculate_consistency_score(text_groups)
+
+            
             
             report_data = {
                 'name': name,
@@ -239,33 +324,57 @@ class FormsView(View):
 
 
 
-class SentimentAnalyser:
-    def __init__(self):
-        # Initialize NLTK Sentiment Intensity Analyzer
-        self.sid = SentimentIntensityAnalyzer()
-        # Initialize spaCy NLP model
-        self.nlp = sp.load("en_core_web_sm")
-    
-    def is_honest(self, text_1):
-        # Sentiment analysis for honesty
-        # You can define your own rules for determining honesty based on sentiment scores
-        sentiment_scores = self.sid.polarity_scores(text_1)
-        honesty_score = sentiment_scores['compound']
-        if honesty_score >= 0:
-            return 'Yes' # Obedient
-        else:
-            return 'No' # Not obedient
+import nltk
+import spacy
 
-    def calculate_consistency_score(self, text_1, text_2):
-        # Calculate consistency score based on two sets of text
-        doc1 = self.nlp(text_1)
-        doc2 = self.nlp(text_2)
-        # You can define your own logic to calculate consistency score
-        # For example, you can measure the similarity between two text samples
-        similarity = doc1.similarity(doc2)
-        con_score = (similarity + 1) / 2 # Normalize to [0, 1]
-        consistency_score = con_score * 100
-        return consistency_score
+class SentimentAnalyzer:
+    def __init__(self):
+        """
+        Initialize SentimentAnalyzer with NLTK Sentiment Intensity Analyzer and spaCy NLP model.
+        """
+        self.sid = nltk.sentiment.SentimentIntensityAnalyzer()
+        self.nlp = spacy.load("en_core_web_sm")
+
+    def is_honest(self, text: str) -> str:
+        """
+        Determine honesty based on sentiment score.
+        
+        Parameters:
+            text (str): Input text to analyze.
+        
+        Returns:
+            str: 'Yes' if sentiment score is positive or neutral, 'No' otherwise.
+        """
+        sentiment_scores = self.sid.polarity_scores(text)
+        honesty_score = sentiment_scores['compound']
+        return 'Yes' if honesty_score >= 0 else 'No'
+
+    def calculate_consistency_score(self, text_groups: dict) -> int:
+        """
+        Calculate consistency score based on multiple pairs of texts.
+        
+        Parameters:
+            text_groups (dict): Dictionary where the keys represent group names
+                and the values are tuples containing two texts.
+        
+        Returns:
+            int: Average consistency score rounded to the nearest integer.
+        """
+        consistency_scores = []
+        for key, (text1, text2) in text_groups.items():
+            try:
+                doc1 = self.nlp(text1)
+                doc2 = self.nlp(text2)
+                similarity = doc1.similarity(doc2)
+                consistency_scores.append(similarity)
+            except Exception as e:
+                # Return a default value if an error occurs during consistency score calculation
+                return 0
+        
+        average_consistency = sum(consistency_scores) / len(consistency_scores) if consistency_scores else 0
+        return round(average_consistency * 100)
+
+
 
 class MachineLearningModel:
     def __init__(self):

@@ -13,5 +13,14 @@ urlpatterns = [
     path('signup/', signup, name='signup'),
     path('deplogin/', DepLoginView.as_view(), name='deplogin'),
     path('depsignup/', depsignup, name='depsignup'),
+    path('logout/', logout, name='logout'),
+    path('reset-password/', views.reset_password, name='reset_password'),
+    path('reset-password/<str:token>/', views.reset_password_confirm, name='reset_password_confirm'),
     #path('generate-pdf-report/', GeneratePDFReportView.as_view(), name='generate_pdf_report'),
     ]
+
+# In your urls.py
+urlpatterns = [
+    # Other URLs
+    
+]
