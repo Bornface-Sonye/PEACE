@@ -1,17 +1,21 @@
-import hashlib
-import uuid
 from django.views import View
 from .forms import AnswerForm,InterrogatorReportForm, DepSignUpForm, DepLoginForm
-from .forms import SignUpForm, LoginForm 
+from .forms import SignUpForm, LoginForm , ResetForm, PasswordResetForm
 from .models import Suspect, Case, SuspectResponse, Department, BadgeNumber
-from .models import Enforcer, CaseCollection, EnforcerCase, SuspectCase, County
+from .models import Enforcer, CaseCollection, EnforcerCase, SuspectCase, County, PasswordResetToken
 
 
 
+
+import hashlib
+import uuid
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils.crypto import get_random_string
+from django.contrib.auth import logout as django_logout
 from django.http import HttpResponse
 from django.shortcuts import render, redirect,get_object_or_404
 from tabulate import tabulate
-from django.conf import settings
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
@@ -86,7 +90,7 @@ class LoginView(View):
 class DepLoginView(View):
     def get(self, request):
         form = DepLoginForm()
-        return render(request, 'deplogin.html', {'form': form})
+        return render(request, 'index.html', {'form': form})
 
     def post(self, request):
         form = DepLoginForm(request.POST)
@@ -96,11 +100,11 @@ class DepLoginView(View):
             department = Department.objects.filter(dep_no=dep_no).first()
             if department and department.check_password(password):
                 # Authentication successful
-                return redirect('index')  # Redirect to the home page upon successful login
+                return redirect('home')  # Redirect to the home page upon successful login
             else:
                 # Authentication failed
                 form.add_error(None, 'Invalid Department number or password')
-        return render(request, 'deplogin.html', {'form': form})
+        return render(request, 'index.html', {'form': form})
 
 
 
@@ -116,45 +120,23 @@ class SuccessPageView(View):
 
 class HomePageView(View):
     def get(self,request):
-        return render(request, 'index.html')
+        return render(request, 'home.html')    
+    
 
-class InterrogatorDashboardView(View):
-    def get(self,request):
-        return render(request, 'interrogator_dashboard.html')
-    
-    
-class DashboardView(View):
-    def get(self,request):
-        return render(request, 'dashboards.html')
-    
-    
-# views.py
-from django.shortcuts import render, redirect
-from django.contrib.auth import logout as django_logout
 
 def logout(request):
     if request.method == 'POST':
         django_logout(request)
         return redirect('home')  # Redirect to home page after logout
-    return render(request, 'logout.html')
+    return render(request, 'forms.html')
 
-
-
-
-from django.contrib.auth.models import User
-from django.shortcuts import render, redirect
-from django.core.mail import send_mail
-from django.conf import settings
-from django.utils.crypto import get_random_string
-from .forms import PasswordResetForm
-from .models import PasswordResetToken
 
 def reset_password(request):
     if request.method == 'POST':
         form = PasswordResetForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data['email']
-            user = User.objects.filter(email=email).first()
+            email_address = form.cleaned_data['email_address']
+            user = BadgeNumber.objects.filter(email_address=email_address).first()
             if user:
                 # Generate a unique token
                 token = get_random_string(length=32)
@@ -166,12 +148,12 @@ def reset_password(request):
                     'Reset Your Password',
                     f'Click the link to reset your password: {reset_link}',
                     settings.EMAIL_HOST_USER,
-                    [email],
+                    [email_address],
                     fail_silently=False,
                 )
             else:
                 # Display error message for non-existing email
-                error_message = "Email does not exist in our records."
+                error_message = "Email Address does not exist in our records."
                 return render(request, 'reset_password.html', {'form': form, 'error_message': error_message})
             # Redirect to a success page or show a message
             return redirect('password_reset_done')
@@ -185,17 +167,20 @@ def reset_password_confirm(request, token):
     if password_reset_token:
         if request.method == 'POST':
             # Update the user's password
-            user = password_reset_token.user
-            new_password = request.POST.get('new_password')
-            user.set_password(new_password)
-            user.save()
-            # Delete the used token
-            password_reset_token.delete()
-            # Redirect to password reset success page or login page
-            return redirect('password_reset_complete')
-        else:
-            # Render a form for the user to enter new password
-            return render(request, 'reset_password_confirm.html', {'token': token})
+            form = ResetForm(request.POST)
+            if form.is_valid():
+                badge_no = form.cleaned_data['badge_no']
+                enforcer = get_object_or_404(Enforcer, badge_no=badge_no)
+                enforcer.delete()
+                enforcer = form.save(commit=False)
+                enforcer.set_password(form.cleaned_data['password'])
+                enforcer.save()
+                # Delete the used token
+                password_reset_token.delete()
+                return redirect('login')
+            else:
+                form = ResetForm()
+            return render(request, 'reset_password_confirm.html', {'form': form, 'token': token})
     else:
         # Token is invalid or expired, handle appropriately
         return render(request, 'reset_password_token_invalid.html')
@@ -254,6 +239,11 @@ class FormsView(View):
             try:
                 suspect_response = get_object_or_404(SuspectResponse, serial_number=serial_number)
                 suspect = suspect_response.unique_id
+                case_id = suspect_response.case_description
+                case_data = get_object_or_404(CaseCollection, case_id=case_id)
+                
+                
+                
                 if not SuspectResponse.objects.filter(serial_number=serial_number).exists():
                     form.add_error(None, "Case Information for the Provided Serial Number does not exist, sorry.")
                     return render(request, self.template_name, {'report_form': form})                
@@ -265,11 +255,14 @@ class FormsView(View):
             # My processing for generating report data
             mlm = MachineLearningModel()
             accuracy = mlm.accuracy()
-            sent1 = SentimentAnalyser()
+            sentiment_analyser = SentimentAnalyzer()
             criminal = CriminalPrediction()
-            name = suspect.unique_id
+            unique_id = suspect.unique_id
             age = suspect.age
             gender = suspect.gender
+            case_description = case_data.case_description
+            case_victim =case_data.case_victim
+            suspect_name = suspect.suspect_name
             recidivist = suspect_response.recidivist
             firstResponse = suspect_response.trace
             secondResponse = suspect_response.know_complainant
@@ -279,32 +272,35 @@ class FormsView(View):
             query1 = suspect_response.query1
             query2 = suspect_response.query2
             query3 = suspect_response.query3
-            consistency_score = sent1.calculate_consistency_score(question1, query1)
-            trace = suspect_response.trace
-            honesty_score = sent1.is_honest(question2)
-            criminal.data_retrieval(name, age, recidivist, trace, obedient_score, consistency_score, gender)
-            criminal.data_preparation()
-            result = criminal.result()
             
-            sentiment_analyzer = SentimentAnalyzer()
             text_groups = {
-                'group1': ("Text1-1", "Text1-2"),
-                'group2': ("Text2-1", "Text2-2"),
-                'group3': ("Text3-1", "Text3-2")
+                'firstSet': (question1, query1),
+                'secondSet': (question2, query2),
+                'thirdSet': (question3, query3),
             }
             
-            consistency_score = sentiment_analyzer.calculate_consistency_score(text_groups)
-
+            consistency_score = sentiment_analyser.calculate_consistency_score(text_groups)
+            trace = suspect_response.trace
+            honesty_score = sentiment_analyser.is_honest(text_groups)
+            criminal.data_retrieval(unique_id, age, recidivist, trace, honesty_score, consistency_score, gender)
+            #criminal.data_preparation()
+            result = criminal.data_preparation()
             
             
             report_data = {
-                'name': name,
+                'case_id': suspect_response.case_description,
+                'case_description':case_description,
+                'case_victim': case_victim,
+                'unique_id': unique_id,
+                'name': suspect_name,
                 'age':age,
                 'gender':gender,
                 'recidivist':recidivist,
+                'trace':trace,
                 'honesty_score':honesty_score,
                 'consistency_score':consistency_score,
-                'case_description': suspect_response.case_description,
+                'submission_date': suspect_response.date_recorded,
+                'serial_number': serial_number,
                 'result': result,
                 'accuracy': accuracy,
             }
@@ -315,7 +311,7 @@ class FormsView(View):
                
             # Return the PDF file as a response
             response = HttpResponse(pdf_bytes, content_type='interrogator/pdf')
-            response['Content-Disposition'] = f'attachment; filename="{name}_report.pdf"'
+            response['Content-Disposition'] = f'attachment; filename="{suspect_name}_report.pdf"'
             return response
             
             
@@ -324,18 +320,16 @@ class FormsView(View):
 
 
 
-import nltk
-import spacy
-
 class SentimentAnalyzer:
     def __init__(self):
         """
         Initialize SentimentAnalyzer with NLTK Sentiment Intensity Analyzer and spaCy NLP model.
         """
         self.sid = nltk.sentiment.SentimentIntensityAnalyzer()
-        self.nlp = spacy.load("en_core_web_sm")
+        self.nlp = sp.load("en_core_web_sm")
 
-    def is_honest(self, text: str) -> str:
+    def is_honest(self, text_group: dict) -> str:
+        
         """
         Determine honesty based on sentiment score.
         
@@ -344,10 +338,27 @@ class SentimentAnalyzer:
         
         Returns:
             str: 'Yes' if sentiment score is positive or neutral, 'No' otherwise.
-        """
-        sentiment_scores = self.sid.polarity_scores(text)
-        honesty_score = sentiment_scores['compound']
-        return 'Yes' if honesty_score >= 0 else 'No'
+        """     
+        
+        honesty_scores = []
+        for key, (text1, text2) in text_group.items():
+            try:
+                doc1 = self.nlp(text1)
+                doc2 = self.nlp(text2)
+                similarity = doc1.similarity(doc2)
+                honesty_scores.append(similarity)
+                
+            except Exception as e:
+                
+                return 'No'
+            
+        average_score = sum(honesty_scores) / len(honesty_scores) if honesty_scores else 0
+        honesty_score = round(average_score * 100)
+                
+        if honesty_score >= 50:
+             return 'Yes' # Obedient
+        else:
+             return 'No' # Not obedient
 
     def calculate_consistency_score(self, text_groups: dict) -> int:
         """
@@ -469,12 +480,13 @@ class CriminalPrediction:
         self.prediction = self.prediction[self.training_features.columns]
         self.predictions = self.model.predict(self.prediction)
         self.new_data['Criminal'] = self.predictions
+        result = self.new_data[self.outcome_name][self.new_data['Criminal'] != 0].to_string(index=False)
+        return result    
 
-    def result(self):
-        result_str = ""
-        for index, row in self.new_data.iterrows():
-            result_str += f"{'Yes' if row['Criminal'] == 1 else 'No'}"
-        return result_str
+    '''def result(self):
+        return self.new_data[self.outcome_name]
+        
+        '''
        
 
 
@@ -494,23 +506,13 @@ def generate_pdf(report_data):
     # Define additional information to include at the top
     additional_info = [
         "PEACE 2017 REFORMED, THE PEACE DIGITAL",
-        " ",
         "P.O. BOX. 197-40400 SARE-AWENDO",
-        " ",
         "Email: bornfacesonye@gmail.com",
         
         "TEL: +254-798073204",
-        " ",
-        " ",
-        "\n",
-        " ",
         "DEPARTMENT:KAMITI",
-        " ",
-        " ",
-        " ",
-        " ",
         "CASE YEAR: 2024",
-        " \n\n",
+        "_____________________________________ \n\n",
     ]
 
     # Create a paragraph for additional information
@@ -520,17 +522,23 @@ def generate_pdf(report_data):
     additional_info_height = sum(paragraph.wrapOn(pdf_canvas, pdf_canvas.width, pdf_canvas.height)[1] for paragraph in additional_info_paragraphs)
 
     # Define table data
+    
     table_data = [
         ["Case Information"],
+        ["Case Id:", report_data['case_id']],
         ["Case Description:", report_data['case_description']],
-        ["Suspect Unique Identification:", report_data['name']],
+        ["Case Victim:", report_data['case_victim']],
+        ["Suspect Identification:", report_data['unique_id']],
+        ["Suspect Name:", report_data['name']],
         ["Suspect Age:", report_data['age']],
         ["Suspect Gender:", report_data['gender']],
         ["Have The Suspect been in Similar Case Before:", report_data['recidivist']],
+        ["Any Trace of Suspect in Crime Scene:", report_data['trace']],
         ["Is The Suspect Honest:", report_data['honesty_score']],
         ["Suspect Consistency Score:", report_data['consistency_score']],
-        ["Predicted Criminal:", report_data['result']],
+        ["Response Submission Date:", report_data['submission_date']],
         ["Accuracy of the Model Used:", report_data['accuracy']],
+        ["Prediction Data:", report_data['result']],
         
     ]
 
@@ -542,7 +550,7 @@ def generate_pdf(report_data):
     pdf_canvas.height = max(additional_info_height, table_height) + inch  # Add some extra space between content and table
 
     # Create a table for main data
-    main_table = Table(table_data, colWidths=[6*inch, 4*inch])  # Adjusting column widths
+    main_table = Table(table_data, colWidths=[6*inch, 6*inch])  # Adjusting column widths
 
     # Set table style for main data
     style = TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER'),

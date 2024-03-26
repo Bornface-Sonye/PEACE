@@ -6,6 +6,7 @@ class BadgeNumber(models.Model):
     badge_no = models.DecimalField(primary_key=True, max_digits=6, decimal_places=0, help_text="Enter a valid Badge Number")
     first_name = models.CharField(max_length=200, help_text="Enter a valid First Name")
     last_name = models.CharField(max_length=200, help_text="Enter a valid Last Name")
+    email_address = models.EmailField(max_length=200,default=" ", help_text="Enter a valid Email Address")
     
     def __str__(self):
         return str(self.badge_no)
@@ -52,8 +53,7 @@ class Department(models.Model):
     
 class Suspect(models.Model):
     unique_id = models.CharField(primary_key=True,max_length=10, unique=True, help_text="Enter a valid Suspect Unique Identifier")
-    first_name = models.CharField(max_length=200, help_text="Enter a valid First Name")
-    last_name = models.CharField(max_length=200, help_text="Enter a valid Last Name")
+    suspect_name = models.CharField(max_length=200, default=" ", help_text="Enter Full Suspect Name")
     gender = models.CharField(max_length=100, unique=False, help_text="Enter a valid Gender")
     date_of_birth = models.DateField(null=True,  help_text="Enter a valid Date of Birth")
     age = models.CharField(max_length=200, help_text="Enter a valid Age")
@@ -72,6 +72,7 @@ class County(models.Model):
 class CaseCollection(models.Model):
     case_id = models.CharField(primary_key=True, max_length=10, unique=True, help_text="Enter a valid Case Identifier")
     case_description = models.CharField(max_length=200, help_text="Enter a valid Case Description")
+    case_victim = models.CharField(max_length=200,default=" ", help_text="Enter a valid Case Victim")
     
     def __str__(self):
         return str(self.case_id)  
@@ -122,21 +123,19 @@ class SuspectResponse(models.Model):
     query3 = models.CharField(max_length=250, default="", help_text="Have you heard of any additional complaints filed by the accuser? If so, specify.")
     
     
+    
     def __str__(self):
         return f"{self.unique_id}"
     
     
 # models.py
 
-from django.db import models
-from .models import CustomUser
-
 class PasswordResetToken(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    token = models.CharField(max_length=32)
+    username = models.ForeignKey(BadgeNumber,default=" ", on_delete=models.CASCADE)
+    token = models.CharField(max_length=32, default=" ",)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Token for {self.user.username}"
+        return f"Token for {self.username}"
 
 

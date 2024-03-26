@@ -84,6 +84,10 @@
                             <p>Already have an account ? <a href="{% url 'login' %}" id="link_below"> Log In</a></p>
                         </div>
                     </form>
+
+                    {% if error_message %}
+                    <p class="error">{{ error_message }}</p>
+                    {% endif %}
                 </div>  
                 <br class="clear">
             </div>

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Suspect, Case, SuspectResponse, Department, BadgeNumber
+from .models import Suspect, Case, SuspectResponse, Department, BadgeNumber, PasswordResetToken
 from .models import Enforcer, CaseCollection, EnforcerCase, SuspectCase, County
 
 from django import forms
@@ -140,10 +140,41 @@ class InterrogatorReportForm(forms.Form):
     
     
     
-# forms.py
 
-from django import forms
-from .models import CustomUser
 
 class PasswordResetForm(forms.Form):
-    email = forms.EmailField(label='Email')
+    email_address = forms.EmailField(label='Email')
+    
+    
+class ResetForm(forms.ModelForm):
+    confirm_password = forms.CharField(widget=forms.PasswordInput)
+
+    class Meta:
+        model = Enforcer
+        fields = ['badge_no', 'password']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['badge_no'] = forms.ModelChoiceField(
+            queryset=BadgeNumber.objects.all(),
+            required=True,
+            label='Badge Number:',
+            widget=forms.Select(attrs={'class': 'black-input-box'})
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        confirm_password = cleaned_data.get("confirm_password")
+
+        if password != confirm_password:
+            raise forms.ValidationError(
+                "Password and confirm password do not match"
+            )
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.set_password(self.cleaned_data["password"])
+        if commit:
+            instance.save()
+        return instance

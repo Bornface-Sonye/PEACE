@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="{% static 'css/forml.css' %}">
     <link rel="stylesheet" href="{% static 'css/report.css' %}">
     <link rel="stylesheet" href="{% static 'css/dash.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard_styles.css' %}">
     <script src="{% static 'js/main.js' %}" defer></script>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap//3.4.1/css/bootstrap.min.css">
@@ -32,7 +33,21 @@
             
             #progress-bar {
                 width: 100%;
-            }        
+            } 
+
+            .form-row select,
+    .form-row input[type="password"] {
+        width: 100%; /* Text fields take full width */
+        box-sizing: border-box;
+        padding: 8px; /* Add padding for better appearance */
+        margin-top: 5px; /* Add spacing between label and input */
+    }
+            
+            /* Adjust width of select to be equal with other fields */
+    .form-row select {
+        min-width: 150px; /* Set minimum width */
+       /* min-height: 20px;*/
+    }
     </style>
 </head>
 <body class="login">
@@ -69,7 +84,7 @@
                 <span class="tooltip">Report</span>
             </li>
             <li>
-                <a href="#">
+                <a href="#" onclick="showForm('logout')" >
                     <i class='bx bx-log-out' id="log_out"></i>
                     <span class="links_name">Log out</span>
                 </a>
@@ -211,6 +226,10 @@
                                 </div>
                                 <br>
                             </form>
+
+                            {% if error_message %}
+                            <p class="error">{{ error_message }}</p>
+                            {% endif %}
                         </section>
 
                         <!-- Report Form Section -->
@@ -223,8 +242,28 @@
                                 <div class="button-container">
                                     <button type="submit" class="generate-button button">Generate Report</button>
                                 </div>
+
+                                {% if error_message %}
+                                 <p class="error">{{ error_message }}</p>
+                                {% endif %}
                             </form>         
                         </section>
+                    <section id="logout" class="form-section hidden">
+                        <div class="container">
+                            <h1 "site-name">Logout</h1>
+                            <p>Are you sure you want to logout?</p>
+                            <form action="{% url 'logout' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit">Logout</button>
+                            </form>
+
+
+                            {% if error_message %}
+                            <p class="error">{{ error_message }}</p>
+                            {% endif %}
+                        </div>
+
+                    </section>
                     </div>
                     <br class="clear">
                 </div>
